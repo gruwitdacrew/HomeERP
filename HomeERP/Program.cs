@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<AppDBContext>(options => options.UseNpgsql("Server=localhost;Port=5432;Database=HomeERP;Username=postgres;Password=admin"));
+builder.Services.AddDbContext<AppDBContext>(options => options.UseNpgsql("Server=db;Port=5432;Database=HomeERP;Username=postgres;Password=admin"));
 builder.Services.AddScoped<EntityService>();
 
 var app = builder.Build();
