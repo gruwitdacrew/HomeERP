@@ -1,6 +1,5 @@
 # Visual Studio  
-.vs/  
-*.sln  
+.vs/    
 *.user  
 *.suo  
 *.userprefs  
