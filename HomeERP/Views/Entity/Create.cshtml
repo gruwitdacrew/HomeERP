@@ -1,0 +1,136 @@
+﻿@using HomeERP.Models.DTOs.Response
+@using HomeERP.Models.Domain
+
+@model List<Entity>
+
+
+<div class="containerForm">
+    @using (Html.BeginForm("Create", "Entity", FormMethod.Post))
+    {
+
+        <div class="form-group">
+            <label>Название сущности:</label>
+            <input class="text-center rounded-3 card-text border-3" type="text" name="EntityName" required>
+        </div>
+
+        <div id="fieldsContainer">
+            <label>Атрибуты:</label>
+        </div>
+
+        <button type="button" class="remove-field text-center rounded-3 card-text border-3" id="addField">Добавить поле</button>
+        <button type="submit" class="remove-field text-center rounded-3 card-text border-3">Создать сущность</button>
+    }
+</div>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+
+    .containerForm {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2 {
+        text-align: center;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    input {
+        width: 80%;
+        height: 50px;
+        padding: 10px;
+        margin-top: 5px;
+    }
+
+    select {
+        height:50px;
+        width: 20%;
+        padding: 10px;
+        margin-top: 5px;
+        margin-right: 10px;
+    }
+
+    button {
+        padding: 10px 15px;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+
+    .field-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .field-group input {
+        flex: 1;
+    }
+
+    .field-group select {
+        margin-left: 10px;
+    }
+
+    .remove-field {
+        background: #007bff;
+        color: white;
+        height: 50px;
+        padding: 10px;
+        margin-top: 5px;
+    }
+</style>
+
+<script>
+    let fieldCount = 0;
+
+    document.getElementById('addField').addEventListener('click', function() {
+        const fieldsContainer = document.getElementById('fieldsContainer');
+        const fieldGroup = document.createElement('div');
+        fieldGroup.classList.add('field-group');
+
+        fieldGroup.innerHTML = `
+            <input class="text-center rounded-3 card-text border-3" name="RawAttributes[${fieldCount}].AttributeName" type="text" placeholder="Название поля" required>
+            <select id="firstSelect[${fieldCount}]" class="text-center rounded-3 card-text border-3" name="RawAttributes[${fieldCount}].AttributeType" onchange="showSecondSelect(${fieldCount})">
+                <option value="Integer">Число</option>
+                <option value="String">Текст</option>
+                <option value="Date">Дата</option>
+                <option value="Link">Ссылка на объект</option>
+            </select>
+            <select id="secondSelect[${fieldCount}]" class="text-center rounded-3 card-text border-3" style="display: none;" name="RawAttributes[${fieldCount}].Args[0]">
+            @foreach(Entity Entity in Model ?? new List<Entity>())
+            {
+                <option value=@Entity.Id>@Entity.Name</option>
+            }
+            </select>
+            <button type="button" class="remove-field text-center rounded-3 card-text border-3">Удалить</button>
+        `;
+
+        fieldsContainer.appendChild(fieldGroup);
+        fieldCount++;
+
+        // Добавить обработчик событий для кнопки удаления
+        fieldGroup.querySelector('.remove-field').addEventListener('click', function() {
+            fieldsContainer.removeChild(fieldGroup);
+            fieldCount--;
+        });
+    });
+
+    function showSecondSelect(a) {
+        const firstSelect = document.getElementById('firstSelect[' + a + ']');
+        const secondSelect = document.getElementById('secondSelect[' + a + ']');
+
+        if (firstSelect.value === 'Link') {
+            secondSelect.style.display = 'block';
+        } else {
+            secondSelect.style.display = 'none';
+        }
+    }
+</script>

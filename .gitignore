@@ -1,0 +1,42 @@
+# Visual Studio  
+.vs/  
+*.sln  
+*.user  
+*.suo  
+*.userprefs  
+
+# Build Results  
+[Dd]ebug/  
+[Rr]elease/  
+[xX]86/  
+[xX]64/  
+[Aa][Rr][Mm]/  
+[Aa][Rr][Mm][Aa]/  
+[Bb]in/  
+[Oo]bj/  
+
+# NuGet Packages  
+*.nupkg  
+**/packages/*  
+!**/packages/build/  
+!**/packages/build/**/lib/netstandard2.0/*  
+!**/packages/build/**/lib/netcoreapp2.1/*  
+!**/packages/build/**/lib/netcoreapp3.1/*  
+!**/packages/build/**/lib/net5.0/*  
+!**/packages/build/**/lib/net6.0/*  
+!**/packages/build/**/lib/net7.0/*  
+
+# Visual Studio Code  
+.vscode/  
+.history/  
+
+# User specific files  
+*.rsuser  
+*.sln.docstates  
+
+# Logs  
+*.log  
+
+# Local Database files  
+*.mdf  
+*.ldf 
