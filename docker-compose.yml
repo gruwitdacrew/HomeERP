@@ -16,7 +16,11 @@ services:
     image: postgres:latest
     container_name: postgres
     ports:  
-      - "5433:5432"     
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER: postgres
+      - POSTGRES_PASSWORD: admin
+      - POSTGRES_DB: HomeERP
     volumes:  
       - pgdata2:/var/lib/postgresql/data
     networks:  
@@ -27,7 +31,7 @@ services:
     restart: always  
     environment:  
       PGADMIN_DEFAULT_EMAIL: admin@example.com  
-      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}  
+      PGADMIN_DEFAULT_PASSWORD: admin  
     ports:  
       - "1235:80"
     networks:  
