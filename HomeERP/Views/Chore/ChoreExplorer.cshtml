@@ -1,0 +1,18 @@
+﻿@using HomeERP.Models.Chore.Domain;
+@using Attribute = HomeERP.Models.EAV.Domain.Attribute;
+@model List<Chore>
+
+<div class="container-fluid">
+    <div class="accordion" id="accordionExample">
+	    @Html.PartialAsync("CreateChore");
+        @{
+            int Counter = 0;
+        }
+	    @foreach (Chore Chore in Model)
+	    {
+            TempData["Counter"] = Counter;
+            await Html.RenderPartialAsync("Chore", Chore);
+            Counter++;
+	    }
+    </div>
+</div>

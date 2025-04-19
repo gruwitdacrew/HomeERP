@@ -1,0 +1,40 @@
+﻿@using HomeERP.Models.EAV.Domain;
+@using Attribute = HomeERP.Models.EAV.Domain.Attribute;
+@model List<Entity>
+
+<div id="CreateChoreModal" class="modal-dialog modal-dialog-centered">
+	<select class="form-select scrollable-menu" aria-label="Пример выбора по умолчанию" onselect="">
+		<option selected></option>
+		@foreach (Entity Entity in Model)
+		{
+			<option value="@Entity.Id">@Entity.Name</option>
+		}
+	</select>
+	@foreach (Entity Entity in Model)
+	{
+		<select id="@Entity.Id" class="form-select scrollable-menu" aria-label="Пример выбора по умолчанию" style="display:none">
+			<option selected></option>
+			@foreach (Attribute Attribute in Entity.Attributes)
+			{
+				<option value="@Attribute.Id">@Attribute.Name</option>
+			}
+		</select>
+	}
+</div>
+
+<style>
+	.scrollable-menu {
+		height: auto;
+		max-height: 200px;
+		overflow-x: hidden;
+	}
+</style>
+
+<script>
+	let CurSelect = null;
+	function ShowAttributeSelect(EntityId) {
+		CurSelect.display = 'none';
+		CurSelect = document.getElementById(EntityId);
+		CurSelect.display = 'block';
+	}
+</script>

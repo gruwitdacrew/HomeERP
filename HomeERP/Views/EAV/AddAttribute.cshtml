@@ -1,0 +1,110 @@
+﻿@using HomeERP.Models.EAV.Domain
+@model Guid
+
+<div class="containerForm">
+    @using (Html.BeginForm("AddAttribute", "EAV", FormMethod.Post))
+    {
+        <input name="EntityId" type="hidden" value="@Model" />
+        <div class="form-group">
+            <label>Название атрибута:</label>
+            <input name="AttributeName" class="text-center rounded-3 card-text border-3" type="text" required />
+        </div>
+        <div class="form-group">
+            <label>Тип атрибута:</label>
+            <select id="FirstSelect" class="text-center rounded-3 card-text border-3" name="AttributeType" onchange="showSecondSelect()">
+                <option value="Integer">Число</option>
+                <option value="String">Текст</option>
+                <option value="Date">Дата</option>
+                <option value="Link">Ссылка на объект</option>
+                <option value="File">Файл</option>
+                <option value="Float">Дробь</option>
+            </select>
+            <select id="SecondSelect" class="text-center rounded-3 card-text border-3" style="display: none;" name="Args[0]">
+                @foreach (Entity Entity in TempData["Entities"] as List<Entity>)
+                {
+                    <option value=@Entity.Id>@Entity.Name</option>
+                }
+            </select>
+        </div>
+        <button class="buttonAction" type="submit">Сохранить</button>
+    }
+</div>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+
+    .containerForm {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2 {
+        text-align: center;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    input {
+        width: 80%;
+        height: 50px;
+        padding: 10px;
+        margin-top: 5px;
+    }
+
+    select {
+        height: 50px;
+        width: 20%;
+        padding: 10px;
+        margin-top: 5px;
+        margin-right: 10px;
+    }
+
+    button {
+        padding: 10px 15px;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+
+    .field-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+        .field-group input {
+            flex: 1;
+        }
+
+        .field-group select {
+            margin-left: 10px;
+        }
+
+    .remove-field {
+        background: #007bff;
+        color: white;
+        height: 50px;
+        padding: 10px;
+        margin-top: 5px;
+    }
+</style>
+
+<script>
+    function showSecondSelect() {
+        const firstSelect = document.getElementById('FirstSelect');
+        const secondSelect = document.getElementById('SecondSelect');
+
+        if (firstSelect.value === 'Link') {
+            secondSelect.style.display = 'block';
+        } else {
+            secondSelect.style.display = 'none';
+        }
+    }
+</script>

@@ -3,6 +3,7 @@ using System;
 using Logistics.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HomeERP.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250310141349_addNavigationAttributeValues")]
+    partial class addNavigationAttributeValues
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -115,7 +118,7 @@ namespace HomeERP.Migrations
                 {
                     b.HasBaseType("HomeERP.Models.EAV.Domain.AttributeValue");
 
-                    b.Property<DateTime?>("Value")
+                    b.Property<DateTime>("Value")
                         .HasColumnType("timestamp with time zone");
 
                     b.ToTable("DateAttributeValues");
@@ -125,11 +128,12 @@ namespace HomeERP.Migrations
                 {
                     b.HasBaseType("HomeERP.Models.EAV.Domain.AttributeValue");
 
-                    b.Property<string>("ContentType")
-                        .HasColumnType("text");
-
-                    b.Property<Guid?>("FileId")
+                    b.Property<Guid>("FileId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.ToTable("FileAttributeValues");
                 });
@@ -138,7 +142,7 @@ namespace HomeERP.Migrations
                 {
                     b.HasBaseType("HomeERP.Models.EAV.Domain.AttributeValue");
 
-                    b.Property<float?>("Value")
+                    b.Property<float>("Value")
                         .HasColumnType("real");
 
                     b.ToTable("FloatAttributeValues");
@@ -148,7 +152,7 @@ namespace HomeERP.Migrations
                 {
                     b.HasBaseType("HomeERP.Models.EAV.Domain.AttributeValue");
 
-                    b.Property<int?>("Value")
+                    b.Property<int>("Value")
                         .HasColumnType("integer");
 
                     b.ToTable("IntegerAttributeValues");
@@ -158,7 +162,7 @@ namespace HomeERP.Migrations
                 {
                     b.HasBaseType("HomeERP.Models.EAV.Domain.AttributeValue");
 
-                    b.Property<Guid?>("Value")
+                    b.Property<Guid>("Value")
                         .HasColumnType("uuid");
 
                     b.HasIndex("Value");
@@ -171,6 +175,7 @@ namespace HomeERP.Migrations
                     b.HasBaseType("HomeERP.Models.EAV.Domain.AttributeValue");
 
                     b.Property<string>("Value")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.ToTable("StringAttributeValues");
@@ -179,7 +184,7 @@ namespace HomeERP.Migrations
             modelBuilder.Entity("HomeERP.Models.EAV.Domain.Attribute", b =>
                 {
                     b.HasOne("HomeERP.Models.EAV.Domain.Entity", "Entity")
-                        .WithMany("Attributes")
+                        .WithMany()
                         .HasForeignKey("EntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -209,7 +214,7 @@ namespace HomeERP.Migrations
             modelBuilder.Entity("HomeERP.Models.EAV.Domain.Object", b =>
                 {
                     b.HasOne("HomeERP.Models.EAV.Domain.Entity", "Entity")
-                        .WithMany("Objects")
+                        .WithMany()
                         .HasForeignKey("EntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -236,14 +241,9 @@ namespace HomeERP.Migrations
                 {
                     b.HasOne("HomeERP.Models.EAV.Domain.Object", null)
                         .WithMany()
-                        .HasForeignKey("Value");
-                });
-
-            modelBuilder.Entity("HomeERP.Models.EAV.Domain.Entity", b =>
-                {
-                    b.Navigation("Attributes");
-
-                    b.Navigation("Objects");
+                        .HasForeignKey("Value")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("HomeERP.Models.EAV.Domain.Object", b =>

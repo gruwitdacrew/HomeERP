@@ -1,0 +1,21 @@
+﻿@using HomeERP.Models.EAV.Domain
+@model List<FileAttributeValue>
+
+<div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+        Список файлов
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+        @foreach (FileAttributeValue FileAttributeValue in Model)
+        {
+            <li><button class="dropdown-item" onclick="GetFile('@FileAttributeValue.FileId', '@FileAttributeValue.ContentType')">@FileAttributeValue.Attribute.Name</button></li>
+        }
+    </ul>
+</div>
+
+<script>
+    $(document).ready(function() {
+        GetFile('@Model.First().FileId', '@Model.First().ContentType');
+        console.log("trying");
+    });
+</script>

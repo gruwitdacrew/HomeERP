@@ -1,0 +1,66 @@
+﻿@using HomeERP.Models.EAV.Domain;
+@model List<Entity>
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    @{
+        int Counter = 0;
+    }
+    <div class="d-flex justify-content-around" style="height:80vh">
+        <div id="sidebar" class="w-25 h-100">
+            @foreach (Entity Entity in Model)
+            {
+                TempData["Counter"] = Counter;
+                await Html.RenderPartialAsync("Entity", Entity);
+                Counter++;
+            }
+        </div>
+        <div id="overview" class="w-75 h-100">
+            <div id="box"></div>
+            <object class="w-100 h-100" id='pdfbox' type="application/pdf" data="">
+            </object>
+        </div>
+    </div>
+</body>
+</html>
+
+<script>
+    function GetObjectFiles(ObjectId) {
+        $.ajax({
+            url: `/FileOverview/GetObjectFiles`,
+            type: 'GET',
+            data: { ObjectId: ObjectId },
+            success: function (data) {
+                $("#box").html(data);
+            }
+        });
+    }
+    function GetFile(FileId, ContentType) {
+        $.ajax({
+            url: "/FileOverview/DownloadFile",
+            type: 'GET',
+            data: { FileId: FileId },
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(data) {
+                var pdfbox = document.getElementById("pdfbox");
+                pdfbox.data = "";
+                pdfbox.type = ContentType;
+
+                var blobUrl = URL.createObjectURL(data);
+                pdfbox.data = blobUrl;
+            },
+            error: function() {
+                var pdfbox = document.getElementById("pdfbox");
+                pdfbox.data = "";
+                pdfbox.type = "";
+            }
+        });
+    }
+</script>

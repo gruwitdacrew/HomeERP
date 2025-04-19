@@ -1,4 +1,5 @@
 using HomeERP.Services;
+using HomeERP.Services.Utils.FileService;
 using Logistics.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,7 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDBContext>(options => options.UseNpgsql("Server=localhost;Port=5432;Database=HomeERP;Username=postgres;Password=admin"));
-builder.Services.AddScoped<EntityService>();
+builder.Services.AddScoped<EAVService>();
+builder.Services.AddScoped<FileService>();
+builder.Services.AddScoped<FileOverviewService>();
 
 var app = builder.Build();
 
@@ -34,12 +37,8 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Entity}/{action=Explorer}"
+    pattern: "{controller=EAV}/{action=Explorer}"
 );
-
-app.MapControllerRoute(
-    name: "EntityCreate",
-    pattern: "{controller=Entity}/{action=Create}");
 
 
 app.Run();

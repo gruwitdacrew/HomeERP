@@ -1,0 +1,102 @@
+﻿@using HomeERP.Models.EAV.Domain
+@using HomeERP.Models.EAV.DTOs.Response
+@model (List<Entity> Entities, EntityWideResponse Entity)
+
+<div class="containerMain">
+    <div class="sidebar">
+        <ul class="sidebarColumn">
+            @foreach (var entity in Model.Entities)
+            {
+                <li id="@entity.Id" class="sidebarItem">
+                    <a class="buttonAction" style="background-color:#f0f0f0; color:inherit" onclick="location.href='@Url.Action("Explorer", "EAV", new { EntityId = entity.Id })'">@entity.Name</a>
+                    <button class="deleteBtn" onclick="location.href='@Url.Action("DeleteEntity", "EAV", new { EntityId = entity.Id })'">&times;</button>
+                </li>
+            }
+        </ul>
+        <a class="buttonAction" href="@Url.Action("CreateEntity", "EAV")">Создать сущность</a>
+    </div>
+    <div id="explorerWindow" class="explorer">
+        @{
+            if (Model.Entity != null)
+            {
+                await Html.RenderPartialAsync("Entity", Model.Entity);
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .containerMain {
+        display: flex;
+        height: 80vh;
+    }
+
+    .sidebar {
+        text-align: center;
+        display: flex;
+        padding:10px;
+        flex-direction: column;
+        width: 15%;
+        min-width:150px;
+        background-color: #f0f0f0;
+        height: 100%;
+    }
+
+    .sidebarColumn {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    .sidebarItem {
+        position: relative;
+        list-style: none;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        transition: background-color 0.3s;
+        cursor: pointer;
+    }
+
+        .sidebarItem:hover .deleteBtn {
+            display: block;
+        }
+        .sidebarItem:last-child {
+        margin-bottom: 0;
+        }
+
+    .buttonAction {
+        padding:10px;
+        display: block;
+        border-radius: 8px;
+        text-decoration: none;
+        background-color: #007bff;
+        color: white;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+        .buttonAction:hover {
+            filter: brightness(0.8)
+        }
+
+    .explorer {
+        text-align: center;
+        flex-grow: 1;
+        padding: 20px;
+        background-color: #ffffff;
+    }
+
+    .deleteBtn {
+        display: none;
+        position: absolute;
+        right: 10px;
+        top: 1px;
+        background: none;
+        border: none;
+        color: red;
+        font-size: 24px;
+        cursor: pointer;
+    }
+</style>
