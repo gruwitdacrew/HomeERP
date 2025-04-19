@@ -3,41 +3,45 @@ version: '3.8'
 services:  
   web:    
     build:  
-      context: . 
-      dockerfile: Dockerfile
+      context: .   
+      dockerfile: Dockerfile  
     ports:  
-      - "8082:8082"
+      - "8080:8080"  
     networks:  
-      - network2
+      - network2  
     depends_on:  
-      - db 
+      - db   
 
   db:  
-    image: postgres:latest
-    container_name: postgres
-    ports:  
-      - "5433:5432"     
+    image: postgres:latest  
+    container_name: postgres  
+    expose:  
+      - "5432"  
+    environment:  
+      POSTGRES_USER: "postgres"           # Corrected  
+      POSTGRES_PASSWORD: "admin"           # Corrected  
+      POSTGRES_DB: "HomeERP"               # Corrected  
     volumes:  
-      - pgdata2:/var/lib/postgresql/data
+      - pgdata2:/var/lib/postgresql/data  
     networks:  
-      - network2
+      - network2  
 
   pgadmin:  
     image: dpage/pgadmin4  
     restart: always  
     environment:  
       PGADMIN_DEFAULT_EMAIL: admin@example.com  
-      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD}  
+      PGADMIN_DEFAULT_PASSWORD: admin  
     ports:  
-      - "1235:80"
+      - "1235:80"  
     networks:  
-      - network2
+      - network2  
     depends_on:  
-      - db
+      - db  
 
 networks:  
   network2:  
-    driver: bridge
+    driver: bridge  
 
 volumes:  
-  pgdata2:
+  pgdata2: 
