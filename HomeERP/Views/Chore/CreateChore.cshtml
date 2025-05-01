@@ -2,25 +2,69 @@
 @using Attribute = HomeERP.Models.EAV.Domain.Attribute;
 @model List<Entity>
 
-<div id="CreateChoreModal" class="modal-dialog modal-dialog-centered">
-	<select class="form-select scrollable-menu" aria-label="Пример выбора по умолчанию" onselect="">
-		<option selected></option>
-		@foreach (Entity Entity in Model)
-		{
-			<option value="@Entity.Id">@Entity.Name</option>
-		}
-	</select>
-	@foreach (Entity Entity in Model)
-	{
-		<select id="@Entity.Id" class="form-select scrollable-menu" aria-label="Пример выбора по умолчанию" style="display:none">
-			<option selected></option>
-			@foreach (Attribute Attribute in Entity.Attributes)
-			{
-				<option value="@Attribute.Id">@Attribute.Name</option>
-			}
-		</select>
-	}
-</div>
+@using (Html.BeginForm("CreateChore", "Chore", FormMethod.Post))
+{
+	<div class="modal fade" id="CreateChoreModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="exampleModalLabel">Создание задания</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть" onclick="ShowAttributeSelect(null)"></button>
+				</div>
+				<div class="modal-body">
+					<div class="mb-3">
+						<label class="form-label">Укажите название дела</label>
+						<input class="form-control" type="text" name="Name" />
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Укажите тип предупреждения</label>
+						<select class="form-select" name="WarningType">
+							<option></option>
+							<option value="After">После наступления даты</option>
+							<option value="Before">До наступления даты</option>
+						</select>
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Укажите период времени предупреждения</label>
+						<input class="form-control" type="number" name="DeltaTimeInDays" />
+					</div>
+
+					<div class="mb-3">
+						<label class="form-label">Выберите необходимую сущность</label>
+						<select id="entitySelect" class="form-select scrollable-menu" aria-label="Пример выбора по умолчанию" onchange="ShowAttributeSelect(this.value)">
+							<option selected></option>
+							@foreach (Entity Entity in Model)
+							{
+								<option value="@Entity.Id">@Entity.Name</option>
+							}
+						</select>
+					</div>
+
+					<div class="mb-3" id="attributeSelect" style="display:none">
+						<label class="form-label">Выберите временной атрибут</label>
+						@foreach (Entity Entity in Model)
+						{
+							<select id="@Entity.Id" name="AttributeId" class="form-select scrollable-menu" aria-label="Пример выбора по умолчанию" style="display:none" disabled>
+								<option selected></option>
+								@foreach (Attribute Attribute in Entity.Attributes)
+								{
+									<option value="@Attribute.Id">@Attribute.Name</option>
+								}
+							</select>
+						}
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-danger" data-bs-dismiss="modal">Отмена</button>
+					<button type="submit" class="btn btn-primary">Создать</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
 
 <style>
 	.scrollable-menu {
@@ -33,8 +77,20 @@
 <script>
 	let CurSelect = null;
 	function ShowAttributeSelect(EntityId) {
-		CurSelect.display = 'none';
+		if (EntityId == null)
+		{
+			document.getElementById('entitySelect').selectedIndex = 0;
+			document.getElementById('attributeSelect').style.display = "none";
+		}
+		if (CurSelect != null) 
+		{
+			CurSelect.style.display = 'none';
+			CurSelect.disabled = true;
+			CurSelect.selectedIndex = 0;
+		}
 		CurSelect = document.getElementById(EntityId);
-		CurSelect.display = 'block';
+		CurSelect.disabled = false;
+		CurSelect.style.display = 'block';
+		document.getElementById('attributeSelect').style.display = "block";
 	}
 </script>

@@ -22,6 +22,32 @@ namespace HomeERP.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("HomeERP.Models.Chore.Domain.Chore", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AttributeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DeltaTimeInDays")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("WarningType")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AttributeId");
+
+                    b.ToTable("Chores");
+                });
+
             modelBuilder.Entity("HomeERP.Models.EAV.Domain.Attribute", b =>
                 {
                     b.Property<Guid>("Id")
@@ -49,15 +75,21 @@ namespace HomeERP.Migrations
 
             modelBuilder.Entity("HomeERP.Models.EAV.Domain.AttributeValue", b =>
                 {
-                    b.Property<Guid>("AttributeId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("ObjectId")
                         .HasColumnType("uuid");
 
-                    b.HasKey("AttributeId", "ObjectId");
+                    b.Property<Guid>("AttributeId")
+                        .HasColumnType("uuid");
 
-                    b.HasIndex("ObjectId");
+                    b.Property<DateTime>("ChangeDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("ObjectId", "AttributeId", "ChangeDate");
+
+                    b.HasIndex("AttributeId");
 
                     b.ToTable((string)null);
 
@@ -174,6 +206,17 @@ namespace HomeERP.Migrations
                         .HasColumnType("text");
 
                     b.ToTable("StringAttributeValues");
+                });
+
+            modelBuilder.Entity("HomeERP.Models.Chore.Domain.Chore", b =>
+                {
+                    b.HasOne("HomeERP.Models.EAV.Domain.Attribute", "Attribute")
+                        .WithMany()
+                        .HasForeignKey("AttributeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attribute");
                 });
 
             modelBuilder.Entity("HomeERP.Models.EAV.Domain.Attribute", b =>

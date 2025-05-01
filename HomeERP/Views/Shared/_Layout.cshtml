@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - HomeERP</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HomeERP.styles.css" asp-append-version="true" />
@@ -21,7 +22,8 @@
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item" style="display: flex;">
                             <a class="nav-link text-dark" asp-area="" asp-controller="EAV" asp-action="Explorer">Explorer</a>
-                            <a class="nav-link text-dark" asp-area="" asp-controller="FileOverview" asp-action="Overview">Overview</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="FileOverview" asp-action="Overview">FileOverview</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Chore" asp-action="ChoreExplorer">Chore</a>
                         </li>
                     </ul>
                 </div>
@@ -33,12 +35,6 @@
             @RenderBody()
         </main>
     </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2024 - HomeERP - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

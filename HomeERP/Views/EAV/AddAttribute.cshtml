@@ -1,100 +1,49 @@
 ﻿@using HomeERP.Models.EAV.Domain
 @model Guid
 
-<div class="containerForm">
-    @using (Html.BeginForm("AddAttribute", "EAV", FormMethod.Post))
-    {
-        <input name="EntityId" type="hidden" value="@Model" />
-        <div class="form-group">
-            <label>Название атрибута:</label>
-            <input name="AttributeName" class="text-center rounded-3 card-text border-3" type="text" required />
+@using (Html.BeginForm("AddAttribute", "EAV", FormMethod.Post))
+{
+    <div class="modal fade" id="AddAttributeModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Добавление атрибута</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <input name="EntityId" type="hidden" value="@Model" />
+                    <div class="mb-3">
+                        <label>Название атрибута:</label>
+                        <input name="AttributeName" class="form-control" type="text" required />
+                    </div>
+                    <div class="mb-3">
+                        <label>Тип атрибута:</label>
+                        <div class="d-flex flex-row gap-3">
+                            <select id="FirstSelect" class="form-select" name="AttributeType" onchange="showSecondSelect()" required>
+                                <option value="Integer">Число</option>
+                                <option value="String">Текст</option>
+                                <option value="Date">Дата</option>
+                                <option value="Link">Ссылка на объект</option>
+                                <option value="File">Файл</option>
+                                <option value="Float">Дробь</option>
+                            </select>
+                            <select id="SecondSelect" class="form-select" style="display: none;" name="Args[0]">
+                                @foreach (Entity Entity in TempData["Entities"] as List<Entity>)
+                                {
+                                    <option value=@Entity.Id>@Entity.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Тип атрибута:</label>
-            <select id="FirstSelect" class="text-center rounded-3 card-text border-3" name="AttributeType" onchange="showSecondSelect()">
-                <option value="Integer">Число</option>
-                <option value="String">Текст</option>
-                <option value="Date">Дата</option>
-                <option value="Link">Ссылка на объект</option>
-                <option value="File">Файл</option>
-                <option value="Float">Дробь</option>
-            </select>
-            <select id="SecondSelect" class="text-center rounded-3 card-text border-3" style="display: none;" name="Args[0]">
-                @foreach (Entity Entity in TempData["Entities"] as List<Entity>)
-                {
-                    <option value=@Entity.Id>@Entity.Name</option>
-                }
-            </select>
-        </div>
-        <button class="buttonAction" type="submit">Сохранить</button>
-    }
-</div>
-
-<style>
-    body {
-        font-family: Arial, sans-serif;
-    }
-
-    .containerForm {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    h1, h2 {
-        text-align: center;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
-    input {
-        width: 80%;
-        height: 50px;
-        padding: 10px;
-        margin-top: 5px;
-    }
-
-    select {
-        height: 50px;
-        width: 20%;
-        padding: 10px;
-        margin-top: 5px;
-        margin-right: 10px;
-    }
-
-    button {
-        padding: 10px 15px;
-        margin-top: 10px;
-        cursor: pointer;
-    }
-
-    .field-group {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-        .field-group input {
-            flex: 1;
-        }
-
-        .field-group select {
-            margin-left: 10px;
-        }
-
-    .remove-field {
-        background: #007bff;
-        color: white;
-        height: 50px;
-        padding: 10px;
-        margin-top: 5px;
-    }
-</style>
+    </div>
+}
 
 <script>
     function showSecondSelect() {

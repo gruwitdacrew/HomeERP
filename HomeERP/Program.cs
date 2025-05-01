@@ -9,9 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDBContext>(options => options.UseNpgsql("Server=localhost;Port=5432;Database=HomeERP;Username=postgres;Password=admin"));
+
 builder.Services.AddScoped<EAVService>();
+
 builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<FileOverviewService>();
+
+builder.Services.AddScoped<ChoreService>();
+
 
 var app = builder.Build();
 

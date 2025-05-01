@@ -63,6 +63,27 @@ namespace HomeERP.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Chores",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    DeltaTimeInDays = table.Column<int>(type: "integer", nullable: false),
+                    WarningType = table.Column<int>(type: "integer", nullable: false),
+                    AttributeId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Chores", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Chores_Attributes_AttributeId",
+                        column: x => x.AttributeId,
+                        principalTable: "Attributes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "LinkAttributes",
                 columns: table => new
                 {
@@ -92,11 +113,13 @@ namespace HomeERP.Migrations
                 {
                     ObjectId = table.Column<Guid>(type: "uuid", nullable: false),
                     AttributeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Value = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    ChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsCurrent = table.Column<bool>(type: "boolean", nullable: false),
+                    Value = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DateAttributeValues", x => new { x.AttributeId, x.ObjectId });
+                    table.PrimaryKey("PK_DateAttributeValues", x => new { x.ObjectId, x.AttributeId, x.ChangeDate });
                     table.ForeignKey(
                         name: "FK_DateAttributeValues_Attributes_AttributeId",
                         column: x => x.AttributeId,
@@ -112,16 +135,73 @@ namespace HomeERP.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "FileAttributeValues",
+                columns: table => new
+                {
+                    ObjectId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AttributeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsCurrent = table.Column<bool>(type: "boolean", nullable: false),
+                    FileId = table.Column<Guid>(type: "uuid", nullable: true),
+                    ContentType = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FileAttributeValues", x => new { x.ObjectId, x.AttributeId, x.ChangeDate });
+                    table.ForeignKey(
+                        name: "FK_FileAttributeValues_Attributes_AttributeId",
+                        column: x => x.AttributeId,
+                        principalTable: "Attributes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FileAttributeValues_Objects_ObjectId",
+                        column: x => x.ObjectId,
+                        principalTable: "Objects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "FloatAttributeValues",
+                columns: table => new
+                {
+                    ObjectId = table.Column<Guid>(type: "uuid", nullable: false),
+                    AttributeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsCurrent = table.Column<bool>(type: "boolean", nullable: false),
+                    Value = table.Column<float>(type: "real", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_FloatAttributeValues", x => new { x.ObjectId, x.AttributeId, x.ChangeDate });
+                    table.ForeignKey(
+                        name: "FK_FloatAttributeValues_Attributes_AttributeId",
+                        column: x => x.AttributeId,
+                        principalTable: "Attributes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_FloatAttributeValues_Objects_ObjectId",
+                        column: x => x.ObjectId,
+                        principalTable: "Objects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "IntegerAttributeValues",
                 columns: table => new
                 {
                     ObjectId = table.Column<Guid>(type: "uuid", nullable: false),
                     AttributeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Value = table.Column<int>(type: "integer", nullable: false)
+                    ChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsCurrent = table.Column<bool>(type: "boolean", nullable: false),
+                    Value = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_IntegerAttributeValues", x => new { x.AttributeId, x.ObjectId });
+                    table.PrimaryKey("PK_IntegerAttributeValues", x => new { x.ObjectId, x.AttributeId, x.ChangeDate });
                     table.ForeignKey(
                         name: "FK_IntegerAttributeValues_Attributes_AttributeId",
                         column: x => x.AttributeId,
@@ -142,11 +222,13 @@ namespace HomeERP.Migrations
                 {
                     ObjectId = table.Column<Guid>(type: "uuid", nullable: false),
                     AttributeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Value = table.Column<Guid>(type: "uuid", nullable: false)
+                    ChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsCurrent = table.Column<bool>(type: "boolean", nullable: false),
+                    Value = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LinkAttributeValues", x => new { x.AttributeId, x.ObjectId });
+                    table.PrimaryKey("PK_LinkAttributeValues", x => new { x.ObjectId, x.AttributeId, x.ChangeDate });
                     table.ForeignKey(
                         name: "FK_LinkAttributeValues_Attributes_AttributeId",
                         column: x => x.AttributeId,
@@ -163,8 +245,7 @@ namespace HomeERP.Migrations
                         name: "FK_LinkAttributeValues_Objects_Value",
                         column: x => x.Value,
                         principalTable: "Objects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -173,11 +254,13 @@ namespace HomeERP.Migrations
                 {
                     ObjectId = table.Column<Guid>(type: "uuid", nullable: false),
                     AttributeId = table.Column<Guid>(type: "uuid", nullable: false),
-                    Value = table.Column<string>(type: "text", nullable: false)
+                    ChangeDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IsCurrent = table.Column<bool>(type: "boolean", nullable: false),
+                    Value = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StringAttributeValues", x => new { x.AttributeId, x.ObjectId });
+                    table.PrimaryKey("PK_StringAttributeValues", x => new { x.ObjectId, x.AttributeId, x.ChangeDate });
                     table.ForeignKey(
                         name: "FK_StringAttributeValues_Attributes_AttributeId",
                         column: x => x.AttributeId,
@@ -198,14 +281,29 @@ namespace HomeERP.Migrations
                 column: "EntityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DateAttributeValues_ObjectId",
-                table: "DateAttributeValues",
-                column: "ObjectId");
+                name: "IX_Chores_AttributeId",
+                table: "Chores",
+                column: "AttributeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_IntegerAttributeValues_ObjectId",
+                name: "IX_DateAttributeValues_AttributeId",
+                table: "DateAttributeValues",
+                column: "AttributeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FileAttributeValues_AttributeId",
+                table: "FileAttributeValues",
+                column: "AttributeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_FloatAttributeValues_AttributeId",
+                table: "FloatAttributeValues",
+                column: "AttributeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IntegerAttributeValues_AttributeId",
                 table: "IntegerAttributeValues",
-                column: "ObjectId");
+                column: "AttributeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LinkAttributes_LinkedEntityId",
@@ -213,9 +311,9 @@ namespace HomeERP.Migrations
                 column: "LinkedEntityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LinkAttributeValues_ObjectId",
+                name: "IX_LinkAttributeValues_AttributeId",
                 table: "LinkAttributeValues",
-                column: "ObjectId");
+                column: "AttributeId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_LinkAttributeValues_Value",
@@ -228,16 +326,25 @@ namespace HomeERP.Migrations
                 column: "EntityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StringAttributeValues_ObjectId",
+                name: "IX_StringAttributeValues_AttributeId",
                 table: "StringAttributeValues",
-                column: "ObjectId");
+                column: "AttributeId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Chores");
+
+            migrationBuilder.DropTable(
                 name: "DateAttributeValues");
+
+            migrationBuilder.DropTable(
+                name: "FileAttributeValues");
+
+            migrationBuilder.DropTable(
+                name: "FloatAttributeValues");
 
             migrationBuilder.DropTable(
                 name: "IntegerAttributeValues");

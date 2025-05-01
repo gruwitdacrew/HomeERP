@@ -1,0 +1,77 @@
+﻿@using HomeERP.Models.EAV.Domain;
+@using HomeERP.Models.Chore.Domain;
+@using Attribute = HomeERP.Models.EAV.Domain.Attribute;
+@using Object = HomeERP.Models.EAV.Domain.Object;
+@model Chore
+
+<form asp-action="DoChore" asp-controller="Chore" method="post" style="height:100%">
+    <input name="ChoreId" type="hidden" value="@Model.Id"/>
+    <div class="card d-flex flex-column h-100">
+        <div class="card-header text-center" style="min-height:50px;max-height:50px;">
+            <h3>Просмотр текущих дел по заданию</h3>
+        </div>
+        <div class="card-body p-0 d-flex flex-column">
+            <div class="w-100 border-bottom border-2" style="min-height:50px; position: relative;"><h4 style="padding-left:50px; position: absolute; bottom: 0;">@Model.Name</h4></div>
+            <div class="w-100 px-5 flex-grow-1 overflow-hidden">
+                <div class="w-100 h-100 gap-1 border-start border-end border-2 p-5 overflow-auto">
+                    @{
+                        int k = 0;
+                    }
+                    @foreach (Object Object in Model.Attribute.Entity.Objects)
+                    {
+                        int DaysLeft;
+                        string backgroundColor;
+
+                        if (Model.WarningType == WarningType.After)
+                        {
+                            DaysLeft = (((DateTime)(Object.AttributeValues.First(AttributeValue => AttributeValue.Attribute == Model.Attribute) as DateAttributeValue).Value).AddDays(Model.DeltaTimeInDays) - DateTime.UtcNow).Days;
+                        }
+                        else
+                        {
+                            DaysLeft = (((DateTime)(Object.AttributeValues.First(AttributeValue => AttributeValue.Attribute == Model.Attribute) as DateAttributeValue).Value).AddDays(-Model.DeltaTimeInDays) - DateTime.UtcNow).Days;
+                        }
+                        if (DaysLeft < 0) backgroundColor = "#feb272";
+                        else if (DaysLeft < 3)
+                        {
+                            backgroundColor = "#6ea8fe";
+                        }
+                        else
+                        {
+                            backgroundColor = "#dee2e6";
+                        }
+
+                        <label class="card pop" style="background-color: @backgroundColor" for="checkbox-@Object.Id">
+                            <div class="card-body d-flex justify-content-between">
+                                <span class="flex-grow-1 ps-3 text-truncate">
+                                    <input name="Tasks[@k].ObjectId" type="hidden" value="@Object.Id" />
+                                    <input id="checkbox-@Object.Id" name="Tasks[@k].IsDone" class="form-check-input" type="checkbox">
+                                    @Object.Name
+                                </span>
+                                <span class="w-25 text-center text-truncate">@(DaysLeft < 0 ? $"Просрочено дней: {-DaysLeft}" : $"Осталось дней: {DaysLeft}")</span>
+                                <p style="width:35%"></p>
+                            </div>
+                        </label>
+                        k++;
+                    }
+                </div>
+            </div>
+            <div class="w-100 border-top border-2 d-flex text-truncate" style="min-height:60px;">
+                <p class="flex-grow-1"></p>
+                <h5 class="m-0 d-flex align-items-center">Новое значение для "@Model.Attribute.Name":</h5>
+                <input name="NewDate" class="form-control m-2 text-center" style="width: 15%" type="date" />
+                <button class="btn btn-primary m-2" type="submit">Выполнить</button>
+            </div>
+        </div>
+        <div class="card-footer d-flex" style="min-height:50px;">
+        </div>
+    </div>
+</form>
+
+<style>
+    .pop{
+        transition: transform 0.1s ease;
+    }
+    .pop:active {
+        transform: scale(0.99);
+    }
+</style>

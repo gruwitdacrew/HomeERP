@@ -2,17 +2,73 @@
 @using Attribute = HomeERP.Models.EAV.Domain.Attribute;
 @model List<Chore>
 
-<div class="container-fluid">
-    <div class="accordion" id="accordionExample">
-	    @Html.PartialAsync("CreateChore");
-        @{
-            int Counter = 0;
-        }
-	    @foreach (Chore Chore in Model)
-	    {
-            TempData["Counter"] = Counter;
-            await Html.RenderPartialAsync("Chore", Chore);
-            Counter++;
-	    }
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<div class="d-flex justify-content-around" style="height: calc(100vh - 150px)">
+    @{
+        await Html.RenderPartialAsync("CreateChore", TempData["Entities"]);
+    }
+    <div class="w-25 p-5 h-100">
+        <div class="card h-100">
+            <div class="card-header text-center" style="height:50px;">
+                <h5>Задания</h5>
+            </div>
+            <div class="card-body overflow-hidden">
+                <div class="d-flex flex-column gap-1 overflow-auto">
+                    @foreach (Chore Chore in Model)
+                    {
+                        <button id="@Chore.Id" type="button" class="btn btn-outline-dark w-100" onclick="SelectChore(this.id)">@Chore.Name</button>
+                    }
+                </div>
+            </div>
+            <div class="card-footer text-end" style="height:50px;">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#CreateChoreModal">Создать задание</button>
+                <button class="btn btn-danger" onclick="DeleteChore()">Удалить</button>
+            </div>
+        </div>
+    </div>
+    <div class="w-75 p-5" id="ChoreExplorer" style="height:100%">
     </div>
 </div>
+
+
+<script>
+    let SelectedChoreId = null;
+
+
+    $(document).ready(function() {
+        var ChoreId = '@TempData["ChoreId"]';
+
+        if (ChoreId) {
+            SelectChore(ChoreId);
+        }
+    });
+
+    function SelectChore(ChoreId)
+    {
+        GetChoreTasks(ChoreId)
+        if (SelectedChoreId != null) document.getElementById(SelectedChoreId).classList.remove("active");
+        SelectedChoreId = ChoreId;
+        document.getElementById(SelectedChoreId).classList.add("active");
+    }
+
+    function DeleteChore() {
+        if (SelectedChoreId === null) {
+            alert("Пожалуйста, выберите задачу для удаления.");
+            return; 
+        }
+
+        location.href = `@Url.Action("DeleteChore", "Chore")?ChoreId=` + SelectedChoreId;
+    }
+
+    function GetChoreTasks(ChoreId) {
+        $.ajax({
+            url: `/Chore/ChoreTasks`,
+            type: 'GET',
+            data: { ChoreId: ChoreId },
+            success: function (data) {
+                $("#ChoreExplorer").html(data);
+            }
+        });
+    }
+</script>

@@ -40,7 +40,7 @@ namespace Logistics.Data
             modelBuilder.Entity<LinkAttribute>().Ignore(LinkAttribute => LinkAttribute.EntityObjects);
 
             modelBuilder.Entity<AttributeValue>().UseTpcMappingStrategy();
-            modelBuilder.Entity<AttributeValue>().HasKey(AttributeValue => new { AttributeValue.AttributeId, AttributeValue.ObjectId });
+            modelBuilder.Entity<AttributeValue>().HasKey(AttributeValue => new { AttributeValue.ObjectId, AttributeValue.AttributeId, AttributeValue.ChangeDate });
             modelBuilder.Entity<AttributeValue>().HasOne(AttributeValue => AttributeValue.Object).WithMany(Object => Object.AttributeValues);
             modelBuilder.Entity<AttributeValue>().HasOne(AttributeValue => AttributeValue.Attribute).WithMany();
 

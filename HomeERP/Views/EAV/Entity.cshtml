@@ -2,274 +2,262 @@
 @using HomeERP.Models.EAV.Domain
 @using Attribute = HomeERP.Models.EAV.Domain.Attribute
 @using Object = HomeERP.Models.EAV.Domain.Object
-@model EntityWideResponse
+@model Entity
 
-<div class="table-container">
-    <h1>@Model.Entity.Name</h1>
-    <div>Фильтры</div>
+@{
+    await Html.RenderPartialAsync("CreateObject", Model);
+    await Html.RenderPartialAsync("AddAttribute", Model.Id);
+}
+<div class="modal fade" id="ObjectHistoryModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Просмотр истории изменения</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body" id="ObjectHistory">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="pb-3 w-100 h-auto">
     @{
-        await Html.RenderPartialAsync("Filter", (Model.Entity, Model.Attributes));
+        await Html.RenderPartialAsync("Filter", Model);
     }
-    <table class="table-bordered">
-        <thead>
-            <tr>
-                <th>Имя</th>
-                @foreach (Attribute Attribute in Model.Attributes)
-                {
-                    <th style="position:relative">
-                        @Attribute.Name
-                        <button onclick="location.href='@Url.Action("DeleteAttribute", "EAV", new { AttributeId = Attribute.Id })'" type="button" class="deleteBtn" style="font-size: 30px">&times;</button>
-                    </th>
+</div>
+@using (Html.BeginForm("EditObject", "EAV", FormMethod.Post, new { enctype = "multipart/form-data", @class = "h-75" }))
+{
+<div class="card w-100 h-100">
+    <div class="card-header text-center d-flex flex-row justify-content-center" style="height:50px;"><h5 class="h-100 m-0 d-flex align-items-center pe-3">Просмотр объектов сущности</h5></div>
+    <div class="card-body overflow-auto p-0">
+        <table id="table" class="table table-hover text-center m-0">
+            <thead>
+                <tr>
+                    <th scope="col" style="width:50px"></th>
+                    <th>Имя</th>
+                    @foreach (Attribute Attribute in Model.Attributes)
+                    {
+                        <th scope="col" class="text-center">
+                            <label>@Attribute.Name</label>
+                            <button onclick="location.href='@Url.Action("DeleteAttribute", "EAV", new { AttributeId = Attribute.Id })'" type="button" class="deleteBtn" style="font-size: 30px">&times;</button>
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int k = 1;
                 }
-            </tr>
-        </thead>
-        <tbody class="table">
-            @foreach (Object Object in Model.Objects)
-            {
-                @using (Html.BeginForm("EditObject", "EAV", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                @foreach (Object Object in Model.Objects ?? Enumerable.Empty<Object>())
                 {
-                    <tr>
-                        <td style="position:relative">
-                            <input name="ObjectId" type="hidden" value="@Object.Id" />
-                            <button type="button" class="deleteBtn" style="font-size: 30px;" onclick="location.href='@Url.Action("DeleteObject", "EAV", new { ObjectId = Object.Id })'">&times;</button>
-                            <button type="button" class="editBtn">&#9998;</button>
-                            <button type="submit" class="confirmBtn">&check;</button>
-                            <input name="ObjectName" class="text-center rounded-3 card-text border-0 inputAttribute" disabled type="text" value="@Object.Name" />
+                    <tr id="tableRow-@Object.Id" onclick="SelectObject('@Object.Id')">
+                        <th scope="row">
+                            <div style="height:50px" class="d-flex justify-content-center align-items-center">@k</div>
+                        </th>
+                        <td>
+                            <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                <input name="ObjectId" type="hidden" value="@Object.Id" disabled />
+                                <input name="ObjectName" class="form-control form-control-sm w-auto text-center" disabled type="text" value="@Object.Name" />
+                            </div>
                         </td>
                         @{
                             int j = 0;
+                            k++;
                         }
                         @foreach (AttributeValue AttributeValue in Object.AttributeValues != null ? Object.AttributeValues : new List<AttributeValue>())
                         {
                             if (AttributeValue is IntegerAttributeValue IntegerAttributeValue)
                             {
                                 <td>
-                                    <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" />
-                                    <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Integer" />
-                                    <input name="RawAttributeValues[@j].AttributeValue" class="text-center rounded-3 card-text border-0 inputAttribute" disabled type="number" value="@IntegerAttributeValue.Value" />
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                        <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Integer" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeValue" class="form-control form-control-sm w-auto text-center" disabled type="number" value="@IntegerAttributeValue.Value" />
+                                    </div>
                                 </td>
                             }
                             else if (AttributeValue is StringAttributeValue StringAttributeValue)
                             {
                                 <td>
-                                    <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" />
-                                    <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="String" />
-                                    <input name="RawAttributeValues[@j].AttributeValue" class="text-center rounded-3 card-text border-0 inputAttribute" disabled type="text" value="@StringAttributeValue.Value" />
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                        <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="String" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeValue" class="form-control form-control-sm w-auto text-center" disabled type="text" value="@StringAttributeValue.Value" />
+                                    </div>
                                 </td>
                             }
                             else if (AttributeValue is DateAttributeValue DateAttributeValue)
                             {
                                 <td>
-                                    <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" />
-                                    <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Date" />
-                                    <input name="RawAttributeValues[@j].AttributeValue" class="text-center rounded-3 card-text border-0 inputAttribute" disabled type="date" value="@DateAttributeValue.Value?.ToLocalTime().ToString("yyyy-MM-dd")" />
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                        <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Date" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeValue" class="form-control form-control-sm w-auto text-center" disabled type="date" value="@DateAttributeValue.Value?.ToLocalTime().ToString("yyyy-MM-dd")" />
+                                    </div>
                                 </td>
                             }
                             else if (AttributeValue is LinkAttributeValue LinkAttributeValue)
                             {
                                 <td>
-                                    <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" />
-                                    <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Link" />
-                                    <select name="RawAttributeValues[@j].AttributeValue" class="text-center rounded-3 card-text border-0 inputAttribute" disabled type="text" value="@LinkAttributeValue.Value">
-                                        <option></option>
-                                        @foreach (Object EntityObject in (AttributeValue.Attribute as LinkAttribute).EntityObjects)
-                                        {
-                                            if (EntityObject.Id == LinkAttributeValue.Value)
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                        <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Link" disabled />
+                                            <select name="RawAttributeValues[@j].AttributeValue" class="form-select form-select-sm w-auto text-center" disabled type="text" value="@LinkAttributeValue.Value">
+                                            <option></option>
+                                            @foreach (Object EntityObject in (AttributeValue.Attribute as LinkAttribute).EntityObjects)
                                             {
-                                                <option value="@EntityObject.Id" selected>@EntityObject.Name</option>
+                                                if (EntityObject.Id == LinkAttributeValue.Value)
+                                                {
+                                                    <option value="@EntityObject.Id" selected>@EntityObject.Name</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@EntityObject.Id">@EntityObject.Name</option>
+                                                }
                                             }
-                                            else
-                                            {
-                                                <option value="@EntityObject.Id">@EntityObject.Name</option>
-                                            }
-                                        }
-                                    </select>
+                                        </select>
+                                    </div>
                                 </td>
                             }
                             else if (AttributeValue is FileAttributeValue FileAttributeValue)
                             {
                                 <td>
-                                    <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" />
-                                    <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="File" />
-                                    <input name="RawAttributeValues[@j].File" class="text-center rounded-3 card-text border-0 inputAttribute" type="file" style="display:none" />
-                                    @if (FileAttributeValue.FileId != null)
-                                    {
-                                        <button type="button" class="text-center rounded-3 card-text border-0 fileName" style="background-color:dodgerblue; width:35%" onclick="location.href='@Url.Action("GetFile", "EAV", new { FileId = FileAttributeValue.FileId })'">скачать файл</button>
-                                        <button type="button" class="text-center rounded-3 card-text border-0 fileName" style="background-color:indianred; width:35%" onclick="location.href='@Url.Action("DeleteFile", "EAV", new { FileId = FileAttributeValue.FileId })'">удалить файл</button>
-                                    }
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                        <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="File" disabled />
+                                        <input name="RawAttributeValues[@j].File" class="form-control form-control-sm w-auto" type="file" style="display:none" disabled />
+                                        @if (FileAttributeValue.FileId != null)
+                                        {
+                                            <div class="d-flex flex-row">
+                                                <button type="button" class="btn btn-primary fileName" onclick="location.href='@Url.Action("GetFile", "EAV", new { FileId = FileAttributeValue.FileId })'">скачать файл</button>
+                                                <button type="button" class="btn btn-danger ms-2 fileName" onclick="location.href='@Url.Action("DeleteFile", "EAV", new { FileId = FileAttributeValue.FileId })'">удалить файл</button>
+                                            </div>
+                                        }
+                                    </div>
                                 </td>
                             }
                             else if (AttributeValue is FloatAttributeValue FloatAttributeValue)
                             {
                                 <td>
-                                    <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" />
-                                    <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Float" />
-                                    <input name="RawAttributeValues[@j].AttributeValue" class="text-center rounded-3 card-text border-0 inputAttribute" disabled type="text" value="@FloatAttributeValue.Value" />
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                        <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Float" disabled />
+                                        <input name="RawAttributeValues[@j].AttributeValue" class="text-center rounded-3 card-text w-auto text-center" disabled type="text" value="@FloatAttributeValue.Value" />
+                                    </div>
                                 </td>
                             }
                             j++;
                         }
                     </tr>
                 }
-            }
-        </tbody>
-    </table>
-    <p></p>
-    <div class="row w-50 px-4 gap-3">
-        <button class="buttonAction w-25" onclick="location.href='@Url.Action("CreateObject", "EAV", new { EntityId = Model.Entity.Id })'">Создать объект</button>
-        <button class="buttonAction w-25" onclick="location.href='@Url.Action("AddAttribute", "EAV", new { EntityId = Model.Entity.Id })'">Добавить атрибут</button>
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer d-flex flex-row justify-content-between p-1" style="height:50px;">
+        <div class="d-flex flex-row p-0 gap-1">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#CreateObjectModal">Создать</button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#AddAttributeModal">Добавить атрибут</button>
+        </div>
+        <div class="d-flex flex-row p-0 gap-1">
+            <button type="button" id="history" class="btn btn-info me-2" disabled data-bs-toggle="modal" data-bs-target="#ObjectHistoryModal" onclick="ObjectHistory()">История изменения</button>
+            <button type="button" id="edit" class="btn btn-primary" onclick="EditObject()" disabled>Редактировать</button>
+            <button type="submit" id="confirm" class="btn btn-success" style="display:none">Сохранить</button>
+            <button type="button" id="delete" class="btn btn-danger" onclick="DeleteObject()" disabled>Удалить</button>
+        </div>
     </div>
 </div>
+}
 
 <script>
-    document.querySelectorAll('.editBtn').forEach(button => {
-        button.onclick = function() {
-            const row = this.closest('tr');
-            const inputs = row.querySelectorAll('.inputAttribute');
-            row.querySelectorAll('.confirmBtn')[0].style.display = 'block';
-            row.querySelectorAll('.editBtn')[0].style.visibility = 'hidden';
-            row.querySelectorAll('.deleteBtn')[0].style.visibility = 'hidden';
+    function SelectObject(ObjectId)
+    {
+        if (SelectedObjectId == ObjectId) return;
 
+        if (ObjectInputs != null)
+        {
+            alert("Вы уже редактируете объект.");
+            return;
+        }
 
-            inputs.forEach(input => {
-                input.disabled = false;
-                input.removeAttribute('disabled');
-            });
+        let row = document.getElementById('tableRow-'+SelectedObjectId);
+        if (row != null) row.classList.remove("table-active");
 
-            const fileInputs = row.querySelectorAll('input[type="file"]');
-            const fileNames = row.querySelectorAll('.fileName');
+        SelectedObjectId = ObjectId;
 
-            // Устанавливаем стиль display для всех input[type="file"] на 'block'
-            fileInputs.forEach(function(input) {
-                input.style.display = 'block';
-            });
+        row = document.getElementById('tableRow-'+SelectedObjectId);
 
-            // Устанавливаем стиль display для всех .fileName на 'none'
-            fileNames.forEach(function(fileName) {
-                fileName.style.display = 'none';
-            });
-        };
-    });
+        if (row != null)
+        {
+            if (row != null) row.classList.add("table-active");
+            document.getElementById('history').disabled = false;
+            document.getElementById('edit').disabled = false;
+            document.getElementById('delete').disabled = false;
+        }
+        else
+        {
+            document.getElementById('history').disabled = true;
+            document.getElementById('edit').disabled = true;
+            document.getElementById('delete').disabled = true;
+        }
+    }
+
+    function DeleteObject()
+    {
+        if (SelectedObjectId === null) {
+            alert("Пожалуйста, выберите объект для удаления.");
+            return;
+        }
+
+        location.href = `@Url.Action("DeleteObject", "EAV")?ObjectId=` + SelectedObjectId;
+    }
+
+    function EditObject()
+    {
+        if (SelectedObjectId === null) {
+            alert("Пожалуйста, выберите объект для редактирования.");
+            return;
+        }
+
+        ObjectInputs = document.getElementById('tableRow-'+SelectedObjectId).querySelectorAll('input, select');
+        ObjectInputs.forEach(input => {
+            input.removeAttribute('disabled');
+        });
+        document.getElementById('tableRow-'+SelectedObjectId).querySelectorAll('input[type="file"]').forEach(input => {
+            input.style.display = 'block';
+        });
+        document.getElementById('confirm').style.display = 'block';
+        document.getElementById('edit').style.display = 'none';
+    }
+
+    function ObjectHistory()
+    {
+        if (SelectedObjectId === null) {
+            alert("Пожалуйста, выберите объект для просмотра истории.");
+            return;
+        }
+
+        $.ajax({
+            url: `/EAV/ObjectHistory`,
+            type: 'GET',
+            data: { ObjectId: SelectedObjectId },
+            success: function (data) {
+                $("#ObjectHistory").html(data);
+            }
+        });
+    }
 </script>
 
 <style>
-    .table-container {
-        margin-bottom: 20px;
-    }
-
-    .content {
-        flex-grow: 1;
-        padding: 20px;
-        background-color: #ffffff;
-    }
-
-    .table-container {
-        margin-top: 20px;
-        overflow-x: auto;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    th, td {
-        padding: 12px;
-        text-align: center;
-        border: 3px solid #ddd;
-    }
-
-    th {
-        background-color: #007bff;
-        color: white;
-    }
-
-        tbody tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        tbody tr:hover .deleteBtn {
-            display: block;
-        }
-
-        th:hover .deleteBtn {
-            display: block;
-        }
-
-        tbody tr:hover .editBtn {
-            display: block;
-        }
-
-    .buttonAction2 {
-        width: 100%;
-        padding: 15px;
-        font-size: 16px;
-        background-color: white;
-        color: #007BFF;
-        border: 2px solid #007BFF;
-        border-radius: 0 0 8px 8px;
-        cursor: pointer;
-        font-weight: bold;
-        transition: background-color 0.3s, color 0.3s;
-    }
-
-    .buttonAction2:hover {
-        background-color: #E0E0E0;
-        color: #007BFF;
+    th:hover .deleteBtn {
+        visibility: visible;
     }
 
     .deleteBtn {
-        display: none;
-        position: absolute;
-        right: 10px;
-        top: 1px;
+        visibility:hidden;
         background: none;
         border: none;
         color: red;
-        font-size: 24px;
-        cursor: pointer;
-    }
-
-    .editBtn {
-        display: none;
-        position: absolute;
-        right: 30px;
-        top: 14px;
-        background: none;
-        border: none;
-        color: black;
-        font-size: 15px;
-        cursor: pointer;
-    }
-
-    .filterСontainer {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between; /* Располагать фильтры равномерно */
-        width: 100%; /* Во всю ширину */
-        padding: 10px;
-        box-sizing: border-box; /* Учитывать padding в ширине */
-    }
-
-    .filter {
-        flex: 1 1 48%; /* Фильтры занимают 48% ширины */
-        margin: 5px; /* Отступы между фильтрами */
-        padding: 10px;
-        background-color: #f0f0f0;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        text-align: center;
-        box-sizing: border-box;
-    }
-
-    .confirmBtn {
-        display: none;
-        position: absolute;
-        right: 30px;
-        top: 7px;
-        background: none;
-        border: none;
-        color: green;
         font-size: 24px;
         cursor: pointer;
     }

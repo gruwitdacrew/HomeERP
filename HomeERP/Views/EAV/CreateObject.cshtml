@@ -2,157 +2,87 @@
 @using HomeERP.Models.EAV.Domain
 @using Attribute = HomeERP.Models.EAV.Domain.Attribute
 @using Object = HomeERP.Models.EAV.Domain.Object
-@model EntityResponse
+@model Entity
 
-<div class="containerForm">
-    @using (Html.BeginForm("CreateObject", "EAV", FormMethod.Post, new { enctype = "multipart/form-data" }))
-    {
-        <input name="EntityId" type="hidden" value="@Model.Entity.Id" />
-        <div class="form-group">
-            <label>Название объекта:</label>
-            <input name="ObjectName" class="text-center rounded-3 card-text border-3" type="text" required />
-        </div>
-        <h3>Значения атрибутов</h3>
-        <div id="fieldsContainer">
-            @{
-                int k = 0;
-                @foreach (Attribute Attribute in Model.Attributes)
-                {
-                    <div style="display: flex; flex-direction: column;">
-                        <label>@Attribute.Name:</label>
+@using (Html.BeginForm("CreateObject", "EAV", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    <div class="modal fade" id="CreateObjectModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Создание объекта</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <input name="EntityId" type="hidden" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label>Название объекта:</label>
+                        <input name="ObjectName" class="form-control" type="text" required />
+                    </div>
+                    <h3>Значения атрибутов</h3>
+                    <div id="fieldsContainer">
                         @{
-                            if (Attribute.Type == AttributeType.Integer)
+                            int k = 0;
+                            @foreach (Attribute Attribute in Model.Attributes)
                             {
-                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Integer" />
-                                <input name="RawAttributeValues[@k].AttributeValue" class="text-center rounded-3 card-text border-3" type="number" />
-                            }
-                            else if (Attribute.Type == AttributeType.String)
-                            {
-                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="String" />
-                                <input name="RawAttributeValues[@k].AttributeValue" class="text-center rounded-3 card-text border-3" type="text" />
-                            }
-                            else if (Attribute.Type == AttributeType.Date)
-                            {
-                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Date" />
-                                <input name="RawAttributeValues[@k].AttributeValue" class="text-center rounded-3 card-text border-3" type="date" />
-                            }
-                            else if (Attribute.Type == AttributeType.Link && Attribute is LinkAttribute LinkAttribute)
-                            {
-                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Link" />
-                                <select name="RawAttributeValues[@k].AttributeValue" class="text-center rounded-3 card-text border-3">
-                                    @foreach (Object Object in LinkAttribute.EntityObjects)
-                                    {
-                                        <option value="@Object.Id">@Object.Name</option>
-                                    }
-                                </select>
-                            }
-                            else if (Attribute.Type == AttributeType.File)
-                            {
-                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="File" />
-                                <input name="RawAttributeValues[@k].File" class="text-center rounded-3 card-text border-3" type="file" />
-                            }
-                            else if (Attribute.Type == AttributeType.Float)
-                            {
-                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Float" />
-                                <input name="RawAttributeValues[@k].AttributeValue" class="text-center rounded-3 card-text border-3" type="text" />
+                                <div class="d-flex flex-column">
+                                    <div class="mb-3">
+                                        <label>@Attribute.Name:</label>
+                                        @{
+                                            if (Attribute.Type == AttributeType.Integer)
+                                            {
+                                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Integer" />
+                                                <input name="RawAttributeValues[@k].AttributeValue" class="form-control" type="number" />
+                                            }
+                                            else if (Attribute.Type == AttributeType.String)
+                                            {
+                                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="String" />
+                                                <input name="RawAttributeValues[@k].AttributeValue" class="form-control" type="text" />
+                                            }
+                                            else if (Attribute.Type == AttributeType.Date)
+                                            {
+                                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Date" />
+                                                <input name="RawAttributeValues[@k].AttributeValue" class="form-control" type="date" />
+                                            }
+                                            else if (Attribute.Type == AttributeType.Link && Attribute is LinkAttribute LinkAttribute)
+                                            {
+                                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Link" />
+                                                <select name="RawAttributeValues[@k].AttributeValue" class="form-select">
+                                                    @foreach (Object Object in LinkAttribute.EntityObjects)
+                                                    {
+                                                        <option value="@Object.Id">@Object.Name</option>
+                                                    }
+                                                </select>
+                                            }
+                                            else if (Attribute.Type == AttributeType.File)
+                                            {
+                                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="File" />
+                                                <input name="RawAttributeValues[@k].File" class="form-control" type="file" />
+                                            }
+                                            else if (Attribute.Type == AttributeType.Float)
+                                            {
+                                                <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                                <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Float" />
+                                                <input name="RawAttributeValues[@k].AttributeValue" class="form-control" type="text" />
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                                k++;
                             }
                         }
                     </div>
-                    k++;
-                }
-        }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <button class="buttonAction" type="submit">Сохранить</button>
 }
-</div>
-
-<style>
-
-
-    body {
-        font-family: Arial, sans-serif;
-    }
-
-    .containerForm {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    h1, h2 {
-        text-align: center;
-    }
-
-    .form-group {
-        margin-bottom: 15px;
-    }
-
-    input {
-        width: 80%;
-        height: 50px;
-        padding: 10px;
-        margin-top: 5px;
-    }
-
-    select {
-        height: 50px;
-        width: 20%;
-        padding: 10px;
-        margin-top: 5px;
-        margin-right: 10px;
-    }
-
-    button {
-        padding: 10px 15px;
-        margin-top: 10px;
-        cursor: pointer;
-    }
-
-    .field-group {
-        display: flex;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-
-        .field-group input {
-            flex: 1;
-        }
-
-        .field-group select {
-            margin-left: 10px;
-        }
-
-    .remove-field {
-        background: #007bff;
-        color: white;
-        height: 50px;
-        padding: 10px;
-        margin-top: 5px;
-    }
-
-    .buttonAction {
-        padding: 10px;
-        display: block;
-        border-radius: 8px;
-        text-decoration: none;
-        background-color: #007bff;
-        color: white;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-        .buttonAction:hover {
-            filter: brightness(0.8)
-        }
-
-</style>

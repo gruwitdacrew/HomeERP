@@ -1,4 +1,5 @@
-﻿using HomeERP.Models.EAV.Domain;
+﻿using AspNetCoreGeneratedDocument;
+using HomeERP.Models.EAV.Domain;
 using HomeERP.Models.EAV.DTOs;
 using HomeERP.Models.EAV.DTOs.Request;
 using HomeERP.Services.Utils.FileService;
@@ -52,9 +53,10 @@ namespace HomeERP.Services
             _context.SaveChanges();
         }
 
-        public void UpdateObject(Object Object)
+        public void UpdateObject(Object Object, List<AttributeValue> NewAttributeValues)
         {
-            _context.Objects.Update(Object);
+            _context.AddRange(NewAttributeValues);
+
             foreach (FileAttributeValue FileAttributeValue in Object.AttributeValues.OfType<FileAttributeValue>())
             {
                 if (FileAttributeValue.FileId != null && FileAttributeValue.File != null)
@@ -62,6 +64,7 @@ namespace HomeERP.Services
                     FileAttributeValue.ContentType = _fileService.Put((Guid)FileAttributeValue.FileId, FileAttributeValue.File).Result;
                 }
             }
+            _context.Objects.Update(Object);
             _context.SaveChanges();
         }
 
@@ -89,7 +92,7 @@ namespace HomeERP.Services
 
         public Object GetObject(Guid ObjectId)
         {
-            return _context.Objects.Where(Object => Object.Id == ObjectId).Include(Object => Object.Entity).Include(Object => Object.AttributeValues).First();
+            return _context.Objects.Where(Object => Object.Id == ObjectId).Include(Object => Object.Entity).Include(Object => Object.AttributeValues.Where(AttributeValue => AttributeValue.IsCurrent)).First();
         }
 
 
@@ -110,9 +113,34 @@ namespace HomeERP.Services
             return Attributes;
         }
 
-        public List<Object> GetEntityObjects(Guid EntityId)
+        public Entity GetEntityObjects(Guid EntityId)
         {
-            return _context.Objects.Where(Object => Object.Entity.Id == EntityId).Include(Object => Object.AttributeValues).ToList();
+            Entity Entity = _context.Entities.Where(Entity => Entity.Id == EntityId).Include(Entity => Entity.Attributes).First();
+
+            List<Attribute> Attributes = _context.Attributes.Where(Attribute => Attribute.Entity == Entity).ToList();
+
+            Attributes.ForEach(Attribute =>
+            {
+                if (Attribute.Type == AttributeType.Link)
+                {
+                    LinkAttribute tmp = _context.LinkAttributes.Where(LinkAttribute => LinkAttribute.Id == Attribute.Id).First();
+                    tmp.EntityObjects = _context.Objects.Where(Object => Object.Entity.Id == tmp.LinkedEntityId).ToList();
+                    Attribute = tmp;
+                }
+            });
+
+            _context.Objects.Where(Object => Object.Entity.Id == EntityId)
+                .Include(Object => Object.AttributeValues.Where(AttributeValue => AttributeValue.IsCurrent))
+                    .ThenInclude(AttributeValue => AttributeValue.Attribute)
+                .Include(Object => Object.Entity.Attributes)
+                .AsEnumerable()
+                .Select(Object =>
+                {
+                    Object.AttributeValues = Object.AttributeValues.OrderBy(AttributeValue => Array.IndexOf(Object.Entity.Attributes.ToArray(), AttributeValue.Attribute)).ToList();
+                    return Object;
+                }).ToList();
+
+            return Entity;
         }
 
         public List<Object> SearchEntityObjects(SearchObjectsRequest SearchRequest)
@@ -123,7 +151,7 @@ namespace HomeERP.Services
                 query = query.Where(Object => Object.Name.ToLower().StartsWith(SearchRequest.NameSearchAttribute.ToLower()));
             }
 
-            foreach (var SearchAttribute in SearchRequest.SearchAttributes != null ? SearchRequest.SearchAttributes : new List<SearchAttribute>())
+            foreach (var SearchAttribute in SearchRequest.SearchAttributes ?? new List<SearchAttribute>())
             {
                 switch (SearchAttribute.AttributeType)
                 {
@@ -159,14 +187,6 @@ namespace HomeERP.Services
                             }
                             break;
                         }
-                    //case AttributeType.File:
-                    //    {
-                    //        if (SearchAttribute.Args[0] != null)
-                    //        {
-                    //            query = query.Where(Object => (Object.AttributeValues.First(AttributeValue => AttributeValue.AttributeId == SearchAttribute.AttributeId) as FileAttributeValue).FileName.StartsWith(SearchAttribute.Args[0]));
-                    //        }
-                    //        break;
-                    //    }
                     case AttributeType.Date:
                         {
                             if (SearchAttribute.Args[0] != null && SearchAttribute.Args[1] != null)
@@ -201,7 +221,11 @@ namespace HomeERP.Services
                         }
                 }
             }
-            return query.Include(Object => Object.AttributeValues).ToList();
+            return query.Include(Object => Object.AttributeValues.Where(AttributeValue => AttributeValue.IsCurrent)).AsEnumerable().Select(Object =>
+            {
+                Object.AttributeValues = Object.AttributeValues.OrderBy(AttributeValue => Array.IndexOf(Object.Entity.Attributes.ToArray(), AttributeValue.Attribute)).ToList();
+                return Object;
+            }).ToList();
         }
 
         public FileContentResult GetFile(Guid FileId)
@@ -295,6 +319,21 @@ namespace HomeERP.Services
             _context.Attributes.Add(Attribute);
             _context.AddRange(AttributeValues);
             _context.SaveChanges();
+        }
+
+        public void GetObjectHistory(Object ObjectWithHistory)
+        {
+            List<AttributeValue> AttributeValues = _context.Objects.Include(Object => Object.AttributeValues).Include(Object => Object.Entity.Attributes).First(Object => Object == ObjectWithHistory).AttributeValues;
+
+            ObjectWithHistory.Entity.Attributes.ForEach(Attribute =>
+            {
+                if (Attribute.Type == AttributeType.Link)
+                {
+                    LinkAttribute tmp = _context.LinkAttributes.Where(LinkAttribute => LinkAttribute.Id == Attribute.Id).First();
+                    tmp.EntityObjects = _context.Objects.Where(Object => Object.Entity.Id == tmp.LinkedEntityId).ToList();
+                    Attribute = tmp;
+                }
+            });
         }
     }
 }

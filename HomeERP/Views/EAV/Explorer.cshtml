@@ -1,102 +1,70 @@
 ﻿@using HomeERP.Models.EAV.Domain
 @using HomeERP.Models.EAV.DTOs.Response
-@model (List<Entity> Entities, EntityWideResponse Entity)
+@model List<Entity>
 
-<div class="containerMain">
-    <div class="sidebar">
-        <ul class="sidebarColumn">
-            @foreach (var entity in Model.Entities)
-            {
-                <li id="@entity.Id" class="sidebarItem">
-                    <a class="buttonAction" style="background-color:#f0f0f0; color:inherit" onclick="location.href='@Url.Action("Explorer", "EAV", new { EntityId = entity.Id })'">@entity.Name</a>
-                    <button class="deleteBtn" onclick="location.href='@Url.Action("DeleteEntity", "EAV", new { EntityId = entity.Id })'">&times;</button>
-                </li>
-            }
-        </ul>
-        <a class="buttonAction" href="@Url.Action("CreateEntity", "EAV")">Создать сущность</a>
+@{
+    await Html.RenderPartialAsync("CreateEntity", Model);
+}
+<div class="d-flex justify-content-around" style="height: calc(100vh - 150px)">
+    <div class="w-25 p-5 h-100">
+        <div class="card w-100 h-100">
+            <div class="card-header text-center" style="height:50px;">
+                <h5>Сущности</h5>
+            </div>
+            <div class="card-body p-3 w-100 h-100 d-flex flex-column gap-1 overflow-auto">
+                @foreach (var Entity in Model)
+                {
+                    <button id="@Entity.Id" type="button" class="btn btn-outline-primary w-100" onclick="SelectEntity(this.id)">@Entity.Name</button>
+                }
+            </div>
+            <div class="card-footer d-flex flex-row justify-content-end p-1 gap-1" style="height:50px;">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#CreateEntityModal">Создать</button>
+                <button class="btn btn-danger" onclick="DeleteEntity()">Удалить</button>
+            </div>
+        </div>
     </div>
-    <div id="explorerWindow" class="explorer">
-        @{
-            if (Model.Entity != null)
-            {
-                await Html.RenderPartialAsync("Entity", Model.Entity);
-            }
-        }
+    <div class="w-75 h-100 d-flex flex-column" id="EntityExplorer">
     </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let SelectedEntityId = null;
 
-<style>
-    .containerMain {
-        display: flex;
-        height: 80vh;
-    }
+    $(document).ready(function() {
+        var EntityId = '@TempData["EntityId"]';
 
-    .sidebar {
-        text-align: center;
-        display: flex;
-        padding:10px;
-        flex-direction: column;
-        width: 15%;
-        min-width:150px;
-        background-color: #f0f0f0;
-        height: 100%;
-    }
-
-    .sidebarColumn {
-        list-style-type: none;
-        padding: 0;
-        margin: 0;
-        overflow-y: auto;
-        flex-grow: 1;
-    }
-
-    .sidebarItem {
-        position: relative;
-        list-style: none;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        transition: background-color 0.3s;
-        cursor: pointer;
-    }
-
-        .sidebarItem:hover .deleteBtn {
-            display: block;
+        if (EntityId) {
+            SelectEntity(EntityId);
         }
-        .sidebarItem:last-child {
-        margin-bottom: 0;
+    });
+
+    function SelectEntity(EntityId)
+    {
+        SelectedObjectId = null;
+        ObjectInputs = null;
+        GetEntityObjects(EntityId)
+        if (SelectedEntityId != null) document.getElementById(SelectedEntityId).classList.remove("active");
+        SelectedEntityId = EntityId;
+        document.getElementById(SelectedEntityId).classList.add("active");
+    }
+
+    function DeleteEntity() {
+        if (SelectedEntityId === null) {
+            alert("Пожалуйста, выберите задачу для удаления.");
+            return;
         }
 
-    .buttonAction {
-        padding:10px;
-        display: block;
-        border-radius: 8px;
-        text-decoration: none;
-        background-color: #007bff;
-        color: white;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-        .buttonAction:hover {
-            filter: brightness(0.8)
-        }
-
-    .explorer {
-        text-align: center;
-        flex-grow: 1;
-        padding: 20px;
-        background-color: #ffffff;
+        location.href = `@Url.Action("DeleteEntity", "EAV")?EntityId=` + SelectedEntityId;
     }
 
-    .deleteBtn {
-        display: none;
-        position: absolute;
-        right: 10px;
-        top: 1px;
-        background: none;
-        border: none;
-        color: red;
-        font-size: 24px;
-        cursor: pointer;
+    function GetEntityObjects(EntityId) {
+        $.ajax({
+            url: `/EAV/Entity`,
+            type: 'GET',
+            data: { EntityId: EntityId },
+            success: function (data) {
+                $("#EntityExplorer").html(data);
+            }
+        });
     }
-</style>
+</script>

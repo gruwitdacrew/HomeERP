@@ -1,87 +1,110 @@
 ﻿@using HomeERP.Models.EAV.Domain
 @using Attribute = HomeERP.Models.EAV.Domain.Attribute
 @using Object = HomeERP.Models.EAV.Domain.Object
-@model (Entity Entity, List<Attribute> Attributes)
+@model Entity
 
 @using (Html.BeginForm("SearchObjects", "EAV", FormMethod.Get, new { id = "searchForm" }))
 {
-    <div class="filterContainer">
-        <input name="EntityId" type="hidden" value="@Model.Entity.Id" />
-        @{
-            int k = 0;
+    <div class="card" style="width:max-content">
+        <div class="card-header text-center d-flex flex-row justify-content-center" style="height:50px;"><h5 class="h-100 m-0 d-flex align-items-center pe-3">Фильтры</h5></div>
+        <div class="card-body d-flex p-3 w-auto">
+            <div class="d-flex flex-row gap-2">
+                <input name="EntityId" type="hidden" value="@Model.Id" />
+                @{
+                    int k = 0;
 
-            <div class="filter">
-                <label>Имя:</label>
-                <input name="NameSearchAttribute" class="text-center rounded-3 card-text border-3" type="text" placeholder="Введите название объекта..." value="@TempData["NameSearchAttribute"]" />
-            </div>
-            @foreach (Attribute Attribute in Model.Attributes)
-            {
-                if (Attribute.Type != AttributeType.File)
-                {
-                    <div class="filter">
-                        <label>@Attribute.Name:</label>
-                        @{
-                            if (Attribute.Type == AttributeType.Integer)
-                            {
-                                <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="SearchAttributes[@k].AttributeType" type="hidden" value="Integer" />
-                                <input name="SearchAttributes[@k].Args[0]" class="text-center rounded-3 card-text border-3" type="number" placeholder="От" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
-                                <input name="SearchAttributes[@k].Args[1]" class="text-center rounded-3 card-text border-3" type="number" placeholder="До" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[1])" />
-                            }
-                            else if (Attribute.Type == AttributeType.String)
-                            {
-                                <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="SearchAttributes[@k].AttributeType" type="hidden" value="String" />
-                                <input name="SearchAttributes[@k].Args[0]" class="text-center rounded-3 card-text border-3" type="text" placeholder="Введите значение атрибута..." value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
-                            }
-                            else if (Attribute.Type == AttributeType.Date)
-                            {
-                                <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="SearchAttributes[@k].AttributeType" type="hidden" value="Date" />
-                                <input name="SearchAttributes[@k].Args[0]" class="text-center rounded-3 card-text border-3" type="date" placeholder="От" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
-                                <input name="SearchAttributes[@k].Args[1]" class="text-center rounded-3 card-text border-3" type="date" placeholder="До" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[1])" />
-                            }
-                            else if (Attribute.Type == AttributeType.Link && Attribute is LinkAttribute LinkAttribute)
-                            {
-                                <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="SearchAttributes[@k].AttributeType" type="hidden" value="Link" />
-                                <select name="SearchAttributes[@k].Args[0]" class="text-center rounded-3 card-text border-3" placeholder="Выберите значение из списка..." value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])">
-                                    <option></option>
-                                    @foreach (Object Object in LinkAttribute.EntityObjects)
-                                    {
-                                        if (Object.Id.ToString() == (TempData[Attribute.Id.ToString()] as List<string>)?[0])
+                    <div class="card border-primary border-2" style="height:min-content">
+                        <div class="card-body text-primary d-flex flex-column gap-1">
+                            <label class="card-title w-100">По имени объекта:</label>
+                            <input name="NameSearchAttribute" class="form-control" style="width:150px" type="text" placeholder="Введите имя..." value="@TempData["NameSearchAttribute"]" />
+                        </div>
+                    </div>
+                    @foreach (Attribute Attribute in Model.Attributes)
+                    {
+                        if (Attribute.Type != AttributeType.File)
+                        {
+                            <div class="card border-primary border-2" style="height:min-content">
+                                <div class="card-body text-primary d-flex flex-column gap-1">
+                                    <label class="card-title w-100">@Attribute.Name:</label>
+                                    @{
+                                        if (Attribute.Type == AttributeType.Integer)
                                         {
-                                            <option value="@Object.Id" selected>@Object.Name</option>
+                                            <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                            <input name="SearchAttributes[@k].AttributeType" type="hidden" value="Integer" />
+                                            <div class="d-flex flex-row">
+                                                <label class="card-title m-0 d-flex align-items-center pe-2">От:</label>
+                                                <input name="SearchAttributes[@k].Args[0]" class="form-control" style="width:150px" type="number" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <label class="card-title m-0 d-flex align-items-center pe-2">От:</label>
+                                                <input name="SearchAttributes[@k].Args[1]" class="form-control form-control-sm" style="width:150px" type="number" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[1])" />
+                                            </div>
+
                                         }
-                                        else
+                                        else if (Attribute.Type == AttributeType.String)
                                         {
-                                            <option value="@Object.Id">@Object.Name</option>
+                                            <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                            <input name="SearchAttributes[@k].AttributeType" type="hidden" value="String" />
+                                            <input name="SearchAttributes[@k].Args[0]" class="form-control" style="width:150px" type="text" placeholder="Введите значение..." value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
+                                        }
+                                        else if (Attribute.Type == AttributeType.Date)
+                                        {
+                                            <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                            <input name="SearchAttributes[@k].AttributeType" type="hidden" value="Date" />
+                                            <div class="d-flex flex-row">
+                                                <label class="card-title m-0 d-flex align-items-center pe-2">От:</label>
+                                                <input name="SearchAttributes[@k].Args[0]" class="form-control" style="width:150px" type="date" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <label class="card-title m-0 d-flex align-items-center pe-2">До:</label>
+                                                <input name="SearchAttributes[@k].Args[1]" class="form-control" style="width:150px" type="date" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[1])" />
+                                            </div>
+                                        }
+                                        else if (Attribute.Type == AttributeType.Link && Attribute is LinkAttribute LinkAttribute)
+                                        {
+                                            <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                            <input name="SearchAttributes[@k].AttributeType" type="hidden" value="Link" />
+                                            <select name="SearchAttributes[@k].Args[0]" class="form-select" style="width:150px" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])">
+                                                <option></option>
+                                                @foreach (Object Object in LinkAttribute.EntityObjects)
+                                                {
+                                                    if (Object.Id.ToString() == (TempData[Attribute.Id.ToString()] as List<string>)?[0])
+                                                    {
+                                                        <option value="@Object.Id" selected>@Object.Name</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@Object.Id">@Object.Name</option>
+                                                    }
+                                                }
+                                            </select>
+                                        }
+                                        else if (Attribute.Type == AttributeType.Float)
+                                        {
+                                            <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
+                                            <input name="SearchAttributes[@k].AttributeType" type="hidden" value="Float" />
+                                            <div class="d-flex flex-row">
+                                                <label class="card-title m-0 d-flex align-items-center pe-2">От:</label>
+                                                <input name="SearchAttributes[@k].Args[0]" class="form-control form-control-sm" style="width:150px" type="text" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
+                                            </div>
+                                            <div class="d-flex flex-row">
+                                                <label class="card-title m-0 d-flex align-items-center pe-2">От:</label>
+                                                <input name="SearchAttributes[@k].Args[1]" class="form-control form-control-sm" style="width:150px" type="text" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[1])" />
+                                            </div>
                                         }
                                     }
-                                </select>
-                            }
-                            // else if (Attribute.Type == AttributeType.File)
-                            // {
-                            //     <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                            //     <input name="SearchAttributes[@k].AttributeType" type="hidden" value="File" />
-                            //     <input name="SearchAttributes[@k].Args[0]" class="text-center rounded-3 card-text border-3" type="text" placeholder="Введите название файла..." value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
-                            // }
-                            else if (Attribute.Type == AttributeType.Float)
-                            {
-                                <input name="SearchAttributes[@k].AttributeId" type="hidden" value="@Attribute.Id" />
-                                <input name="SearchAttributes[@k].AttributeType" type="hidden" value="Float" />
-                                <input name="SearchAttributes[@k].Args[0]" class="text-center rounded-3 card-text border-3" type="text" placeholder="От" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[0])" />
-                                <input name="SearchAttributes[@k].Args[1]" class="text-center rounded-3 card-text border-3" type="text" placeholder="До" value="@((TempData[Attribute.Id.ToString()] as List<string>)?[1])" />
-                            }
+                                </div>
+                            </div>
+                            k++;
                         }
-                    </div>
-                    k++;
+                    }
                 }
-            }
-        }
-        <button class="buttonAction" style="width:200px;">Поиск</button>
+            </div>
+        </div>
+        <div class="card-footer text-end" style="height:50px;">
+            <button class="btn btn-primary">Поиск</button>
+        </div>
     </div>
-    <p></p>
 }
 
 <script>
@@ -94,7 +117,7 @@
             contentType: "application/json",
             data: $(this).serialize(),
             success: function (data) {
-                $("#explorerWindow").html(data);
+                $("#EntityExplorer").html(data);
             },
             error: function (result) {
                 alert("Ошибка при выполнении запроса");

@@ -20,16 +20,16 @@ namespace HomeERP.Controllers
 
         public IActionResult Explorer(Guid? EntityId)
         {
-            EntityWideResponse? EntityResponse = null;
-            if (EntityId != null)
-            {
-                Entity Entity = _entitiesService.GetEntity((Guid)EntityId);
-                List<Attribute> Attributes = _entitiesService.GetEntityAttributes((Guid)EntityId);
-                List<Object> Objects = _entitiesService.GetEntityObjects((Guid)EntityId);
+            if (EntityId != null) TempData["EntityId"] = EntityId;
 
-                EntityResponse = new EntityWideResponse(Entity, Attributes, Objects);
-            }
-            return View("Explorer", (_entitiesService.GetEntities(), EntityResponse));
+            return View(_entitiesService.GetEntities());
+        }
+
+        public IActionResult Entity(Guid EntityId)
+        {
+            TempData["Entities"] = _entitiesService.GetEntities();
+
+            return PartialView(_entitiesService.GetEntityObjects(EntityId));
         }
 
         public IActionResult SearchObjects(SearchObjectsRequest SearchObjectsRequest)
@@ -44,7 +44,9 @@ namespace HomeERP.Controllers
                 TempData[SearchAttribute.AttributeId.ToString()] = SearchAttribute.Args;
             }
 
-            return View("Explorer", (_entitiesService.GetEntities(), new EntityWideResponse(Entity, Attributes, Objects)));
+            TempData["Entities"] = _entitiesService.GetEntities();
+
+            return PartialView("Entity", Entity);
         }
 
         [HttpGet]
@@ -80,16 +82,6 @@ namespace HomeERP.Controllers
         }
 
 
-
-        [HttpGet]
-        public IActionResult CreateObject(Guid EntityId)
-        {
-            Entity Entity = _entitiesService.GetEntity(EntityId);
-            List<Attribute> Attributes = _entitiesService.GetEntityAttributes(EntityId);
-
-            return View(new EntityResponse(Entity, Attributes));
-        }
-
         public IActionResult DeleteObject(Guid ObjectId)
         {
             Entity Entity = _entitiesService.GetObjectEntity(ObjectId);
@@ -99,43 +91,45 @@ namespace HomeERP.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateObject(CreateObjectRequest request)
+        public IActionResult CreateObject(CreateObjectRequest request)
         {
             Object Object = new Object(request.ObjectName, _entitiesService.GetEntity(request.EntityId));
             List<Attribute> Attributes = _entitiesService.GetEntityAttributes(request.EntityId);
 
             foreach (AttributeValueDTO AttributeValueRaw in request.RawAttributeValues ?? new List<AttributeValueDTO>())
             {
-                switch (AttributeValueRaw.AttributeType)
+                Attribute Attribute = Attributes.First(Attribute => Attribute.Id == AttributeValueRaw.AttributeId);
+
+                switch (Attribute.Type)
                 {
                     case AttributeType.Integer:
                         {
-                            Object.AttributeValues.Add(new IntegerAttributeValue(AttributeValueRaw.AttributeValue != null ? int.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attributes.Where(Attribute => Attribute.Id == AttributeValueRaw.AttributeId).First()));
+                            Object.AttributeValues.Add(new IntegerAttributeValue(AttributeValueRaw.AttributeValue != null ? int.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute));
                             break;
                         }
                     case AttributeType.String:
                         {
-                            Object.AttributeValues.Add(new StringAttributeValue(AttributeValueRaw.AttributeValue, Object, Attributes.Where(Attribute => Attribute.Id == AttributeValueRaw.AttributeId).First()));
+                            Object.AttributeValues.Add(new StringAttributeValue(AttributeValueRaw.AttributeValue, Object, Attribute));
                             break;
                         }
                     case AttributeType.Date:
                         {
-                            Object.AttributeValues.Add(new DateAttributeValue(AttributeValueRaw.AttributeValue != null ? DateTime.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attributes.Where(Attribute => Attribute.Id == AttributeValueRaw.AttributeId).First()));
+                            Object.AttributeValues.Add(new DateAttributeValue(AttributeValueRaw.AttributeValue != null ? DateTime.Parse(AttributeValueRaw.AttributeValue).ToUniversalTime() : null, Object, Attribute));
                             break;
                         }
                     case AttributeType.Link:
                         {
-                            Object.AttributeValues.Add(new LinkAttributeValue(AttributeValueRaw.AttributeValue != null ? Guid.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attributes.Where(Attribute => Attribute.Id == AttributeValueRaw.AttributeId).First()));
+                            Object.AttributeValues.Add(new LinkAttributeValue(AttributeValueRaw.AttributeValue != null ? Guid.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute));
                             break;
                         }
                     case AttributeType.File:
                         {
-                            Object.AttributeValues.Add(new FileAttributeValue(AttributeValueRaw.File != null ? Guid.NewGuid() : null, AttributeValueRaw.File, Object, Attributes.Where(Attribute => Attribute.Id == AttributeValueRaw.AttributeId).First()));
+                            Object.AttributeValues.Add(new FileAttributeValue(AttributeValueRaw.File != null ? Guid.NewGuid() : null, AttributeValueRaw.File, Object, Attribute));
                             break;
                         }
                     case AttributeType.Float:
                         {
-                            Object.AttributeValues.Add(new FloatAttributeValue(AttributeValueRaw.AttributeValue != null ? float.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attributes.Where(Attribute => Attribute.Id == AttributeValueRaw.AttributeId).First()));
+                            Object.AttributeValues.Add(new FloatAttributeValue(AttributeValueRaw.AttributeValue != null ? float.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute));
                             break;
                         }
                 }
@@ -150,40 +144,115 @@ namespace HomeERP.Controllers
         public IActionResult EditObject(EditObjectRequest request)
         {
             Object Object = _entitiesService.GetObject(request.ObjectId);
-            Object.Name = request.ObjectName;
+            List<Attribute> Attributes = _entitiesService.GetEntityAttributes(Object.Entity.Id);
 
+            List<AttributeValue> NewAttributeValues = new List<AttributeValue>();
+
+            Object.Name = request.ObjectName;
             foreach (AttributeValueDTO AttributeValueRaw in request.RawAttributeValues ?? new List<AttributeValueDTO>())
             {
-                AttributeValue AttributeValue = Object.AttributeValues.First(AttributeValue => AttributeValue.AttributeId == AttributeValueRaw.AttributeId);
+                Attribute Attribute = Attributes.First(Attribute => Attribute.Id == AttributeValueRaw.AttributeId);
 
-                if (AttributeValue is IntegerAttributeValue IntegerAttributeValue)
+                AttributeValue AttributeValueOld = Object.AttributeValues.First(AttributeValue => AttributeValue.AttributeId == Attribute.Id && AttributeValue.IsCurrent);
+
+                switch (Attribute.Type)
                 {
-                    IntegerAttributeValue.Value = AttributeValueRaw.AttributeValue != null ? int.Parse(AttributeValueRaw.AttributeValue) : null;
-                }
-                else if (AttributeValue is StringAttributeValue StringAttributeValue)
-                {
-                    StringAttributeValue.Value = AttributeValueRaw.AttributeValue != null ? AttributeValueRaw.AttributeValue : null;
-                }
-                else if (AttributeValue is DateAttributeValue DateAttributeValue)
-                {
-                    DateAttributeValue.Value = AttributeValueRaw.AttributeValue != null ? DateTime.Parse(AttributeValueRaw.AttributeValue) : null;
-                }
-                else if (AttributeValue is LinkAttributeValue LinkAttributeValue)
-                {
-                    LinkAttributeValue.Value = AttributeValueRaw.AttributeValue != null ? Guid.Parse(AttributeValueRaw.AttributeValue) : null;
-                }
-                else if (AttributeValue is FloatAttributeValue FloatAttributeValue)
-                {
-                    FloatAttributeValue.Value = AttributeValueRaw.AttributeValue != null ? float.Parse(AttributeValueRaw.AttributeValue) : null;
-                }
-                else if (AttributeValue is FileAttributeValue FileAttributeValue && AttributeValueRaw.File != null)
-                {
-                    FileAttributeValue.FileId = Guid.NewGuid();
-                    FileAttributeValue.File = AttributeValueRaw.File;
+                    case AttributeType.Integer:
+                        {
+                            int? NewValue = AttributeValueRaw.AttributeValue != null ? int.Parse(AttributeValueRaw.AttributeValue) : null;
+                            if (((IntegerAttributeValue)AttributeValueOld).Value != NewValue)
+                            {
+                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
+                                {
+                                    ((IntegerAttributeValue)AttributeValueOld).Value = NewValue;
+                                }
+                                else
+                                {
+                                    AttributeValueOld.IsCurrent = false;
+                                    NewAttributeValues.Add(new IntegerAttributeValue(NewValue, Object, Attribute));
+                                }
+                            }
+                            break;
+                        }
+                    case AttributeType.String:
+                        {
+                            if (((StringAttributeValue)AttributeValueOld).Value != AttributeValueRaw.AttributeValue)
+                            {
+                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
+                                {
+                                    ((StringAttributeValue)AttributeValueOld).Value = AttributeValueRaw.AttributeValue;
+                                }
+                                else
+                                {
+                                    AttributeValueOld.IsCurrent = false;
+                                    NewAttributeValues.Add(new StringAttributeValue(AttributeValueRaw.AttributeValue, Object, Attribute));
+                                }
+                            }
+                            break;
+                        }
+                    case AttributeType.Date:
+                        {
+                            
+                            DateTime? NewValue = AttributeValueRaw.AttributeValue != null ? DateTime.Parse(AttributeValueRaw.AttributeValue).ToUniversalTime() : null;
+                            if (((DateAttributeValue)AttributeValueOld).Value != NewValue)
+                            {
+                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
+                                {
+                                    ((DateAttributeValue)AttributeValueOld).Value = NewValue;
+                                }
+                                else
+                                {
+                                    AttributeValueOld.IsCurrent = false;
+                                    NewAttributeValues.Add(new DateAttributeValue(NewValue, Object, Attribute));
+                                }
+                            }
+                            break;
+                        }
+                    case AttributeType.Link:
+                        {
+                            Guid? NewValue = AttributeValueRaw.AttributeValue != null ? Guid.Parse(AttributeValueRaw.AttributeValue) : null;
+                            if (((LinkAttributeValue)AttributeValueOld).Value != NewValue)
+                            {
+                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
+                                {
+                                    ((LinkAttributeValue)AttributeValueOld).Value = NewValue;
+                                }
+                                else
+                                {
+                                    AttributeValueOld.IsCurrent = false;
+                                    NewAttributeValues.Add(new LinkAttributeValue(NewValue, Object, Attribute));
+                                }
+                            }
+                            break;
+                        }
+                    case AttributeType.File:
+                        {
+
+                            ((FileAttributeValue)AttributeValueOld).File = AttributeValueRaw.File;
+                            if (AttributeValueRaw.File != null) ((FileAttributeValue)AttributeValueOld).FileId = Guid.NewGuid();
+                            break;
+                        }
+                    case AttributeType.Float:
+                        {
+                            float? NewValue = AttributeValueRaw.AttributeValue != null ? float.Parse(AttributeValueRaw.AttributeValue) : null;
+                            if (((FloatAttributeValue)AttributeValueOld).Value != NewValue)
+                            {
+                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
+                                {
+                                    ((FloatAttributeValue)AttributeValueOld).Value = NewValue;
+                                }
+                                else
+                                {
+                                    AttributeValueOld.IsCurrent = false;
+                                    NewAttributeValues.Add(new FloatAttributeValue(NewValue, Object, Attribute));
+                                }
+                            }
+                            break;
+                        }
                 }
             }
 
-            _entitiesService.UpdateObject(Object);
+            _entitiesService.UpdateObject(Object, NewAttributeValues);
 
             return RedirectToAction("Explorer", "EAV", new { EntityId = Object.Entity.Id });
         }
@@ -231,6 +300,14 @@ namespace HomeERP.Controllers
             _entitiesService.AddAttribute(Entity, Attribute);
 
             return RedirectToAction("Explorer", "EAV", new { EntityId = EntityId });
+        }
+
+        public IActionResult ObjectHistory(Guid ObjectId)
+        {
+            Object Object = _entitiesService.GetObject(ObjectId);
+            _entitiesService.GetObjectHistory(Object);
+
+            return PartialView(Object);
         }
     }
 }

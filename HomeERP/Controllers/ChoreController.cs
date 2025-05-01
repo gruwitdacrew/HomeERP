@@ -1,7 +1,8 @@
 ﻿using HomeERP.Models.Chore.DTOs;
-using HomeERP.Models.EAV.Domain;
+using HomeERP.Models.Chore.Domain;
 using HomeERP.Services;
 using Microsoft.AspNetCore.Mvc;
+
 
 namespace HomeERP.Controllers
 {
@@ -12,20 +13,42 @@ namespace HomeERP.Controllers
         {
             _choreService = choreService;
         }
-        public IActionResult GetChores()
+        public IActionResult ChoreExplorer(Guid? ChoreId)
         {
-            return PartialView(_choreService.GetChores());
+            TempData["Entities"] = _choreService.GetEntities();
+            if (ChoreId != null) TempData["ChoreId"] = ChoreId;
+
+            return View(_choreService.GetChores());
+        }
+
+        public IActionResult ChoreTasks(Guid ChoreId)
+        {
+            Chore Chore = _choreService.GetChoreTasks(ChoreId);
+            return PartialView(Chore);
         }
 
         public IActionResult CreateChore(Guid AttributeId, ChoreDTO ChoreDTO)
         {
-            return View();
+            Chore Chore = new Chore(ChoreDTO, _choreService.GetDateAttribute(AttributeId));
+            _choreService.CreateChore(Chore);
+
+            return RedirectToAction("ChoreExplorer", "Chore", new { ChoreId = Chore.Id });
         }
 
-        [HttpGet]
-        public IActionResult CreateChore()
+        public IActionResult DeleteChore(Guid ChoreId)
         {
-            return PartialView(_choreService.GetEntities());
+            Chore Chore = _choreService.GetChore(ChoreId);
+            _choreService.DeleteChore(Chore);
+
+            return RedirectToAction("ChoreExplorer", "Chore");
+        }
+
+        public IActionResult DoChore(DoChoreRequest Request)
+        {
+            Chore Chore = _choreService.GetChore(Request.ChoreId);
+            _choreService.DoChore(Chore, Request.Tasks.Where(Task => Task.IsDone == "on").Select(Task => Task.ObjectId).ToList(), Request.NewDate);
+
+            return RedirectToAction("ChoreExplorer", "Chore", new { ChoreId = Request.ChoreId });
         }
     }
 }

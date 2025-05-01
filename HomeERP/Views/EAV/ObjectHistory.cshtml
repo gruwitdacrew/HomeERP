@@ -1,0 +1,124 @@
+﻿@using Object = HomeERP.Models.EAV.Domain.Object
+@using Attribute = HomeERP.Models.EAV.Domain.Attribute
+@using HomeERP.Models.EAV.Domain
+@model Object
+
+<div class="card">
+    <div class="card-header">
+        @Model.Name
+    </div>
+    <div class="card-body d-flex flex-column gap-3">
+        <div id="history" class="d-flex flex-row overflow-auto p-3 h-auto" scrollLeft="">
+            @{
+                var Groups = Model.AttributeValues.GroupBy(Object => Object.ChangeDate?.ToString("dd.MM.yyyy")).OrderBy(Group => DateTime.Parse(Group.Key)).ToList();
+                for (int i = 0; i < Groups.Count() - 1; i ++)
+                {
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill date-btn" style="min-width: 2rem; height:2rem;" data-date="@Groups[i].Key">@Groups[i].Key</button>
+                    <div class="progress progress-bar" style="min-width: 100px; height:2px; margin-top:1rem"></div>
+                    <div id="@Groups[i].Key" style="display:none">
+                        @foreach (var AttributeValue in Groups[i])
+                        {
+                            switch (AttributeValue.Attribute.Type)
+                            {
+                                case AttributeType.Integer:
+                                    {
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">@(((IntegerAttributeValue)AttributeValue).Value)</b></div>
+                                        break;
+                                    }
+                                case AttributeType.Date:
+                                    {
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">@(((DateAttributeValue)AttributeValue).Value?.ToLocalTime().ToString("dd.MM.yyyy"))</b></div>
+                                        break;
+                                    }
+                                case AttributeType.Link:
+                                    {
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">@((AttributeValue.Attribute as LinkAttribute).EntityObjects.First(Object => Object.Id == ((LinkAttributeValue)AttributeValue).Value).Name)</b></div>
+                                        break;
+                                    }
+                                case AttributeType.String:
+                                    {
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">"@(((StringAttributeValue)AttributeValue).Value)"</b></div>
+                                        break;
+                                    }
+                                case AttributeType.Float:
+                                    {
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">@(((FloatAttributeValue)AttributeValue).Value)</b></div>
+                                        break;
+                                    }
+                            }
+                        }
+                    </div>
+                }
+                <button type="button" class="btn btn-sm btn-info rounded-pill date-btn" style="min-width: 2rem; height:2rem;" data-date="@Groups.Last().Key">@Groups.Last().Key</button>
+                <div id="@Groups.Last().Key" style="display:none">
+                    @foreach (var AttributeValue in Groups.Last())
+                    {
+                        switch (AttributeValue.Attribute.Type)
+                        {
+                            case AttributeType.Integer:
+                                {
+                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">@(((IntegerAttributeValue)AttributeValue).Value)</b></div>
+                                    break;
+                                }
+                            case AttributeType.Date:
+                                {
+                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">@(((DateAttributeValue)AttributeValue).Value?.ToLocalTime().ToString("dd.MM.yyyy"))</b></div>
+                                    break;
+                                }
+                            case AttributeType.Link:
+                                {
+                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">@((AttributeValue.Attribute as LinkAttribute).EntityObjects.First(Object => Object.Id == ((LinkAttributeValue)AttributeValue).Value).Name)</b></div>
+                                    break;
+                                }
+                            case AttributeType.String:
+                                {
+                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">"@(((StringAttributeValue)AttributeValue).Value)"</b></div>
+                                    break;
+                                }
+                            case AttributeType.Float:
+                                {
+                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-end text-truncate col">@(((FloatAttributeValue)AttributeValue).Value)</b></div>
+                                    break;
+                                }
+                        }
+                    }
+                </div>
+                <div class="ms-5 me-5"></div>
+            }
+        </div>
+        <div id="changesContainer" class="justify-content-center p-3">
+        </div>
+    </div>
+</div>
+
+<script>
+    setTimeout(() => {
+        const historyEl = document.getElementById('history');
+        historyEl.scrollTo({ left: historyEl.scrollWidth, behavior: 'smooth' });
+        const lastDateBtn = document.querySelector('.date-btn:last-of-type');
+        if (lastDateBtn) {
+            lastDateBtn.click();
+        }
+    }, 200);
+
+    document.querySelectorAll('.date-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const selectedDate = this.getAttribute('data-date');
+
+            loadChangesForDate(selectedDate);
+
+            document.querySelectorAll('.date-btn').forEach(b => {
+                b.classList.remove('btn-info', 'btn-primary');
+                b.classList.add('btn-primary');
+            });
+
+            this.classList.remove('btn-primary');
+            this.classList.add('btn-info');
+        });
+    });
+
+    function loadChangesForDate(date) {
+        const container = document.getElementById('changesContainer');
+        container.innerHTML = document.getElementById(date).innerHTML;
+    }
+</script>

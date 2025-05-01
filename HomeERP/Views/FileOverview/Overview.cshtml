@@ -11,19 +11,40 @@
     @{
         int Counter = 0;
     }
-    <div class="d-flex justify-content-around" style="height:80vh">
-        <div id="sidebar" class="w-25 h-100">
-            @foreach (Entity Entity in Model)
-            {
-                TempData["Counter"] = Counter;
-                await Html.RenderPartialAsync("Entity", Entity);
-                Counter++;
-            }
+    <div class="d-flex justify-content-around" style="height: calc(100vh - 150px)">
+        <div class="w-25 p-5 h-100">
+            <div class="card w-100 h-100">
+                <div class="card-header text-center" style="height:50px;">
+                    <h5>Документация</h5>
+                </div>
+                <div class="card-body p-3 w-100 h-100 overflow-auto">
+                    <div class="accordion w-100 h-100" id="accordionExample">
+                        @foreach (Entity Entity in Model)
+                        {
+                            TempData["Counter"] = Counter;
+                            await Html.RenderPartialAsync("Entity", Entity);
+                            Counter++;
+                        }
+                    </div>
+                </div>
+                <div class="card-footer text-end" style="height:50px;">
+                    <p></p>
+                </div>
+            </div>
         </div>
-        <div id="overview" class="w-75 h-100">
-            <div id="box"></div>
-            <object class="w-100 h-100" id='pdfbox' type="application/pdf" data="">
-            </object>
+        <div class="w-75 p-5 h-100">
+            <div class="card w-100 h-100">
+                <div class="card-header text-center d-flex flex-row justify-content-center" style="height:50px;">
+                    <h5 class="h-100 m-0 d-flex align-items-center pe-3">Просмотр файла</h5>
+                    <div id="box"></div>
+                </div>
+                <div class="card-body d-flex p-3 w-100 h-100 overflow-auto">
+                    <object class="flex-grow-1 w-100" id='pdfbox' type="application/pdf" data=""></object>
+                </div>
+                <div class="card-footer text-end" style="height:50px;">
+                    <p></p>
+                </div>
+            </div>
         </div>
     </div>
 </body>
@@ -40,7 +61,7 @@
             }
         });
     }
-    function GetFile(FileId, ContentType) {
+    function GetFile(FileId, ContentType, FileName) {
         $.ajax({
             url: "/FileOverview/DownloadFile",
             type: 'GET',
@@ -52,6 +73,7 @@
                 var pdfbox = document.getElementById("pdfbox");
                 pdfbox.data = "";
                 pdfbox.type = ContentType;
+                document.getElementById('dropdownMenuButton1').textContent = FileName;
 
                 var blobUrl = URL.createObjectURL(data);
                 pdfbox.data = blobUrl;
@@ -60,6 +82,7 @@
                 var pdfbox = document.getElementById("pdfbox");
                 pdfbox.data = "";
                 pdfbox.type = "";
+                document.getElementById('dropdownMenuButton1').textContent = "Выберите файл";
             }
         });
     }

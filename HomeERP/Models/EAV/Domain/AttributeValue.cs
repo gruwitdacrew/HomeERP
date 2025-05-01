@@ -10,11 +10,16 @@ namespace HomeERP.Models.EAV.Domain
         public Guid AttributeId { get; set; }
         public Attribute Attribute { get; set; }
 
+        public DateTime? ChangeDate { get; set; }
+        public bool IsCurrent { get; set; }
+
         protected AttributeValue() { }
         protected AttributeValue(Object Object, Attribute Attribute)
         {
             this.Object = Object;
             this.Attribute = Attribute;
+            ChangeDate = DateTime.UtcNow;
+            IsCurrent = true;
         }
     }
 

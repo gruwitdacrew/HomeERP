@@ -13,6 +13,8 @@ namespace HomeERP.Models.Chore.Domain
 
         public Attribute Attribute { get; set; }
 
+        public Chore() {}
+
         public Chore(ChoreDTO ChoreDTO, Attribute Attribute)
         {
             Id = Guid.NewGuid();
