@@ -17,7 +17,7 @@
                     @{
                         int k = 0;
                     }
-                    @foreach (Object Object in Model.Attribute.Entity.Objects)
+                    @foreach (Object Object in Model.Attribute.Entity.Objects ?? new List<Object>())
                     {
                         int DaysLeft;
                         string backgroundColor;

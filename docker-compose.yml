@@ -3,45 +3,55 @@ version: '3.8'
 services:  
   web:    
     build:  
-      context: .   
-      dockerfile: Dockerfile  
+      context: . 
+      dockerfile: Dockerfile
+    environment:  
+      DB_CONNECTION_STRING: Server=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT} 
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}  
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET}
     ports:  
-      - "8080:8080"  
+      - "8080:8080"
     networks:  
-      - network2  
+      - network
     depends_on:  
-      - db   
+      - db 
 
   db:  
-    image: postgres:latest  
-    container_name: postgres  
-    expose:  
-      - "5432"  
+    image: postgres:latest
+    container_name: postgres
+    expose: 
+      - "5432" 
     environment:  
-      POSTGRES_USER: "postgres"           # Corrected  
-      POSTGRES_PASSWORD: "admin"           # Corrected  
-      POSTGRES_DB: "HomeERP"               # Corrected  
+      POSTGRES_DB: ${POSTGRES_DB} 
+      POSTGRES_USER: ${POSTGRES_USER} 
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}    
     volumes:  
-      - pgdata2:/var/lib/postgresql/data  
+      - pgdata:/var/lib/postgresql/data
     networks:  
-      - network2  
+      - network
 
-  pgadmin:  
-    image: dpage/pgadmin4  
-    restart: always  
-    environment:  
-      PGADMIN_DEFAULT_EMAIL: admin@example.com  
-      PGADMIN_DEFAULT_PASSWORD: admin  
-    ports:  
-      - "1235:80"  
+  minio:
+    image: minio/minio
+    container_name: minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:  
+      - minio_data:/data  
+    environment:
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT} 
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}  
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}  
+    command: server /data --console-address ":9001"
     networks:  
-      - network2  
-    depends_on:  
-      - db  
+      - network
 
 networks:  
-  network2:  
-    driver: bridge  
+  network:  
+    driver: bridge
 
-volumes:  
-  pgdata2: 
+volumes:
+  minio_data:  
+  pgdata:

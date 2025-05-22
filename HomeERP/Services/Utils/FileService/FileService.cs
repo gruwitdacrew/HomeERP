@@ -12,7 +12,7 @@ namespace HomeERP.Services.Utils.FileService
 
         public FileService(IConfiguration configuration)
         {
-            configuration.Bind("FileSettings", fileServiceConfiguration);
+            if (Environment.GetEnvironmentVariable("MINIO_ENDPOINT") == null) configuration.Bind("FileSettings", fileServiceConfiguration);
 
             _client = new MinioClient()
                 .WithEndpoint(fileServiceConfiguration.Endpoint, 9000)
