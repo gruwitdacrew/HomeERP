@@ -1,7 +1,5 @@
-﻿using HomeERP.Models.EAV.Domain;
-using HomeERP.Models.FileOverview.DTOs.Responses;
+﻿using HomeERP.Domain.Common.Repositories;
 using HomeERP.Services;
-using HomeERP.Services.Utils.FileService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeERP.Controllers
@@ -9,12 +7,10 @@ namespace HomeERP.Controllers
     public class FileOverviewController : Controller
     {
         private readonly FileOverviewService _fileOverviewService;
-        private readonly FileService _fileService;
 
-        public FileOverviewController(FileOverviewService fileOverviewService, FileService fileService)
+        public FileOverviewController(FileOverviewService fileOverviewService)
         {
             _fileOverviewService = fileOverviewService;
-            _fileService = fileService;
         }
         public async Task<IActionResult> Overview(Guid FileId)
         {
@@ -28,7 +24,7 @@ namespace HomeERP.Controllers
 
         public async Task<IActionResult> DownloadFile(Guid FileId)
         {
-            return await _fileService.Get(FileId);
+            return await _fileOverviewService.DownloadFile(FileId);
         }
     }
 }

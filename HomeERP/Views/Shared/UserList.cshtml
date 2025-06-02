@@ -1,0 +1,62 @@
+﻿@using HomeERP.Domain.Common.Models
+@using HomeERP.Domain.Common
+@model List<User>
+
+<div class="d-flex flex-row gap-3">
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#AddUserModal">Добавить пользователя</button>
+    <select id="selectUser" class="form-select form-select-sm w-auto text-center" type="text" onchange="selectUser(this)" value="@Storage.SessionUserId">
+        @foreach (User user in Model)
+        {
+            if (user.Id == Storage.SessionUserId)
+            {
+                <option value="@user.Id" selected>@user.Name</option>
+            }
+            else
+            {
+                <option value="@user.Id">@user.Name</option>
+            }
+        }
+    </select>
+    <button type="button" class="btn btn-danger" onclick="deleteUser()">Удалить пользователя</button>
+</div>
+<div class="modal fade" id="AddUserModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Добавление пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label>Имя пользователя:</label>
+                    <input id="userName" class="form-control" type="text" required />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-primary" data-bs-dismiss="modal" onclick="addUser()">Добавить</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    function deleteUser()
+    {
+        location.href = `@Url.Action("DeleteUser", "EAV")?userId=` + selectedUser.value + '&returnUrl=' + location.href;
+    }
+    function addUser()
+    {
+        $.ajax({
+            url: `/EAV/AddUser`,
+            type: 'POST',
+            data: { userName: document.getElementById('userName').value },
+            success: function(data) {
+                $('#userList').html(data);
+            }
+        });
+    }
+    function selectUser(selectedUser)
+    {
+        location.href = `@Url.Action("SelectUser", "EAV")?userId=` + selectedUser.value + '&returnUrl=' + location.href;
+    }
+</script>

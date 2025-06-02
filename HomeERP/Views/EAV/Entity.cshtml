@@ -1,7 +1,6 @@
-﻿@using HomeERP.Models.EAV.DTOs.Response
-@using HomeERP.Models.EAV.Domain
-@using Attribute = HomeERP.Models.EAV.Domain.Attribute
-@using Object = HomeERP.Models.EAV.Domain.Object
+﻿@using HomeERP.Domain.EAV.Models
+@using Attribute = HomeERP.Domain.EAV.Models.Attribute
+@using Object = HomeERP.Domain.EAV.Models.Object
 @model Entity
 
 @{
@@ -9,7 +8,7 @@
     await Html.RenderPartialAsync("AddAttribute", Model.Id);
 }
 <div class="modal fade" id="ObjectHistoryModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">Просмотр истории изменения</h5>
@@ -36,7 +35,7 @@
                 <tr>
                     <th scope="col" style="width:50px"></th>
                     <th>Имя</th>
-                    @foreach (Attribute Attribute in Model.Attributes)
+                        @foreach (Attribute Attribute in Model.Attributes)
                     {
                         <th scope="col" class="text-center">
                             <label>@Attribute.Name</label>
@@ -49,7 +48,7 @@
                 @{
                     int k = 1;
                 }
-                @foreach (Object Object in Model.Objects ?? Enumerable.Empty<Object>())
+                    @foreach (Object Object in Model.Objects ?? Enumerable.Empty<Object>())
                 {
                     <tr id="tableRow-@Object.Id" onclick="SelectObject('@Object.Id')">
                         <th scope="row">
@@ -103,19 +102,19 @@
                                     <div style="height:50px" class="d-flex justify-content-center align-items-center">
                                         <input name="RawAttributeValues[@j].AttributeId" type="hidden" value="@AttributeValue.Attribute.Id" disabled />
                                         <input name="RawAttributeValues[@j].AttributeType" type="hidden" value="Link" disabled />
-                                            <select name="RawAttributeValues[@j].AttributeValue" class="form-select form-select-sm w-auto text-center" disabled type="text" value="@LinkAttributeValue.Value">
-                                            <option></option>
-                                            @foreach (Object EntityObject in (AttributeValue.Attribute as LinkAttribute).EntityObjects)
+                                        <select name="RawAttributeValues[@j].AttributeValue" class="form-select form-select-sm w-auto text-center" disabled type="text" value="@LinkAttributeValue.Value">
+                                        <option></option>
+                                        @foreach (Object EntityObject in (AttributeValue.Attribute as LinkAttribute).LinkedEntity.Objects)
+                                        {
+                                            if (EntityObject.Id == LinkAttributeValue.Value)
                                             {
-                                                if (EntityObject.Id == LinkAttributeValue.Value)
-                                                {
-                                                    <option value="@EntityObject.Id" selected>@EntityObject.Name</option>
-                                                }
-                                                else
-                                                {
-                                                    <option value="@EntityObject.Id">@EntityObject.Name</option>
-                                                }
+                                                <option value="@EntityObject.Id" selected>@EntityObject.Name</option>
                                             }
+                                            else
+                                            {
+                                                <option value="@EntityObject.Id">@EntityObject.Name</option>
+                                            }
+                                        }
                                         </select>
                                     </div>
                                 </td>
@@ -225,6 +224,9 @@
         });
         document.getElementById('tableRow-'+SelectedObjectId).querySelectorAll('input[type="file"]').forEach(input => {
             input.style.display = 'block';
+        });
+        document.getElementById('tableRow-'+SelectedObjectId).querySelectorAll('.fileName').forEach(fileButton => {
+            fileButton.style.display = 'none';
         });
         document.getElementById('confirm').style.display = 'block';
         document.getElementById('edit').style.display = 'none';

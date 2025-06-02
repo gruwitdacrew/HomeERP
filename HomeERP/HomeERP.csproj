@@ -11,6 +11,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Proxies" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -23,7 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\FileOverview\DTOs\Requests\" />
+    <Folder Include="Domain\FileOverview\" />
+    <Folder Include="Logic\Utils\" />
+    <Folder Include="Views\FileOverview\DTOs\Requests\" />
   </ItemGroup>
 
 </Project>

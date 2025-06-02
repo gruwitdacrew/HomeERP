@@ -1,5 +1,6 @@
-﻿@using HomeERP.Models.EAV.Domain;
-@using Attribute = HomeERP.Models.EAV.Domain.Attribute;
+﻿@using HomeERP.Domain.EAV.Models;
+@using Object = HomeERP.Domain.EAV.Models.Object;
+@using Attribute = HomeERP.Domain.EAV.Models.Attribute;
 @model List<Entity>
 
 @using (Html.BeginForm("CreateChore", "Chore", FormMethod.Post))
@@ -18,42 +19,53 @@
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label">Укажите тип предупреждения</label>
-						<select class="form-select" name="WarningType">
-							<option></option>
-							<option value="After">После наступления даты</option>
-							<option value="Before">До наступления даты</option>
+						<label class="form-label">Укажите тип</label>
+						<select class="form-select" name="ChoreType" onchange="showSecondSelect(this)">
+							<option value="Plan">Плановое</option>
+							<option value="Repetitive">Повторяющееся</option>
 						</select>
 					</div>
 
-					<div class="mb-3">
+					<div id="secondSelect" style="display: none">
 						<label class="form-label">Укажите период времени предупреждения</label>
-						<input class="form-control" type="number" name="DeltaTimeInDays" />
+						<div class="d-flex flex-row mb-3">
+							<label class="form-label me-2" style="width:45%">Количество дней:</label>
+							<input class="form-control form-control-sm" type="number" name="Days" value="1"/>
+						</div>
+						<div class="d-flex flex-row mb-3">
+							<label class="form-label me-2" style="width:45%">Количество часов:</label>
+							<input class="form-control form-control-sm" type="number" name="Hours" value="0" />
+						</div>
 					</div>
 
 					<div class="mb-3">
-						<label class="form-label">Выберите необходимую сущность</label>
-						<select id="entitySelect" class="form-select scrollable-menu" aria-label="Пример выбора по умолчанию" onchange="ShowAttributeSelect(this.value)">
-							<option selected></option>
-							@foreach (Entity Entity in Model)
+						<label class="form-label">Укажите имущество</label>
+						<div class="accordion" id="accordionPanelsStayOpenExample">
+							@{int k = 0;}
+							@foreach (Entity entity in Model)
 							{
-								<option value="@Entity.Id">@Entity.Name</option>
+								<div class="accordion-item">
+									<h2 class="accordion-header" id="panelsStayOpen-headingOne">
+										<button onclick="selectEntity('checkbox-@entity.Id')" class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(entity.Id)" aria-expanded="false" aria-controls="collapseOne">
+											<input id="checkbox-@entity.Id" type="checkbox" class="form-check-input ms-1" />
+											<span class="ms-4">@entity.Name</span>
+										</button>
+									</h2>
+									<div id="collapse@(entity.Id)" class="accordion-collapse collapse" aria-labelledby="panelsStayOpen-headingOne">
+										<div class="accordion-body">
+											@foreach (Object Object in entity.Objects)
+											{
+												<label class="d-flex flex-row ms-5" for="checkbox-@Object.Id">
+													<input onclick="selectObject(this)" id="checkbox-@Object.Id" type="checkbox" class="form-check-input objectTask" name="ObjectIds" value="@Object.Id" />
+													<p class="d-flex flex-column align-items-center">@Object.Name</p>
+												</label>
+												k++;
+											}
+										</div>
+									</div>
+								</div>
 							}
-						</select>
-					</div>
-
-					<div class="mb-3" id="attributeSelect" style="display:none">
-						<label class="form-label">Выберите временной атрибут</label>
-						@foreach (Entity Entity in Model)
-						{
-							<select id="@Entity.Id" name="AttributeId" class="form-select scrollable-menu" aria-label="Пример выбора по умолчанию" style="display:none" disabled>
-								<option selected></option>
-								@foreach (Attribute Attribute in Entity.Attributes)
-								{
-									<option value="@Attribute.Id">@Attribute.Name</option>
-								}
-							</select>
-						}
+						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
@@ -75,22 +87,47 @@
 </style>
 
 <script>
-	let CurSelect = null;
-	function ShowAttributeSelect(EntityId) {
-		if (EntityId == null)
-		{
-			document.getElementById('entitySelect').selectedIndex = 0;
-			document.getElementById('attributeSelect').style.display = "none";
+	function selectObject(checkbox) {
+		const accordionItem = checkbox.closest('.accordion-item');
+
+		const inputs = accordionItem.querySelectorAll('input[type=checkbox].objectTask');
+
+		const allChecked = Array.from(inputs).every(input => input.checked);
+
+		const parentCheckbox = accordionItem.querySelector('input[type=checkbox]');
+
+		if (parentCheckbox) {
+			parentCheckbox.checked = allChecked;
 		}
-		if (CurSelect != null) 
+	}
+	function selectEntity(selectedElementId)
+	{
+		var entityCheck = document.getElementById(selectedElementId);
+		var accordionItem = entityCheck.closest('.accordion-item');
+
+		if (entityCheck.checked)
 		{
-			CurSelect.style.display = 'none';
-			CurSelect.disabled = true;
-			CurSelect.selectedIndex = 0;
+			entityCheck.checked = false;
+			accordionItem.querySelectorAll('input[type=checkbox]').forEach(input => {
+				input.checked = false;
+			});
 		}
-		CurSelect = document.getElementById(EntityId);
-		CurSelect.disabled = false;
-		CurSelect.style.display = 'block';
-		document.getElementById('attributeSelect').style.display = "block";
+		else
+		{
+			entityCheck.checked = true;
+			accordionItem.querySelectorAll('input[type=checkbox]').forEach(input => {
+				input.checked = true;
+			});
+		}
+
+
+	}
+	function showSecondSelect(selectedOption)
+	{
+		if (selectedOption.value == "Repetitive")
+		{
+			document.getElementById("secondSelect").style.display = "block";
+		}
+		else document.getElementById("secondSelect").style.display = "none";
 	}
 </script>

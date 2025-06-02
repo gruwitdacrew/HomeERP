@@ -1,0 +1,94 @@
+﻿@using HomeERP.Domain.Chores.Models
+@using Task = HomeERP.Domain.Chores.Models.Task
+@using User = HomeERP.Domain.Common.Models.User
+@model Chore
+
+<div class="card">
+    <div class="card-header">
+        @Model.Name
+    </div>
+    <div class="card-body d-flex flex-column gap-3">
+        <div id="journal" class="d-flex flex-row overflow-auto p-3 h-auto" scrollLeft="">
+            @{
+                var Groups = Model.Tasks.GroupBy(task => task.ExecutionMoment?.ToString("dd.MM.yyyy")).OrderBy(Group => DateTime.Parse(Group.Key)).ToList();
+                for (int i = 0; i < Groups.Count() - 1; i++)
+                {
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill date-btn" style="width:auto; height:2rem;" data-date="@Groups[i].Key">@Groups[i].Key</button>
+                    <div class="progress progress-bar" style="min-width: 100px; height:2px; margin-top:1rem"></div>
+                    <div id="@Groups[i].Key" style="display:none">
+                        @foreach (var task in Groups[i])
+                        {
+                            var trackedTime = task.TrackedTime.HasValue
+                            ? $"за время <b>{task.TrackedTime.Value.ToString("hh\\:mm")}</b>"
+                            : "";
+                            var user = task.User != null ? task.User.Name : "[Удален]";
+                            <p>Пользователь <b>@user</b> обслужил <b>@task.Object.Name</b> в <b>@(((DateTime)task.ExecutionMoment).ToLocalTime().ToString("HH:mm"))</b> @Html.Raw(trackedTime) </p>
+                        }
+                        <div id="trackedTimeByUser" class="pt-5">
+                            <h5>Потраченное время пользователями:</h5>
+                            @foreach (User user in Groups[i].Where(task => task.User != null).Select(task => task.User).Distinct())
+                            {
+                                <label>@user.Name</label>
+                                <b class="me-5">@Groups[i].Where(task => task.User == user && task.TrackedTime != null).Select(task => (TimeSpan)task.TrackedTime).Aggregate(TimeSpan.Zero, (acc, t) => acc + t).ToString("hh\\:mm")</b>
+                            }
+                        </div>
+                    </div>
+                }
+                <button type="button" class="btn btn-sm btn-primary rounded-pill date-btn" style="width:auto; height:2rem;" data-date="@Groups.Last().Key">@Groups.Last().Key</button>
+                <div id="@Groups.Last().Key" style="display:none">
+                    @foreach (var task in Groups.Last())
+                    {
+                        var trackedTime = task.TrackedTime.HasValue
+                        ? $"за время <b>{task.TrackedTime.Value.ToString("hh\\:mm")}</b>"
+                        : "";
+                        var user = task.User != null ? task.User.Name : "[Удален]";
+                        <p>Пользователь <b>@user</b> обслужил <b>@task.Object.Name</b> в <b>@(((DateTime)task.ExecutionMoment).ToLocalTime().ToString("HH:mm"))</b> @Html.Raw(trackedTime) </p>
+                    }
+                    <div id="trackedTimeByUser" class="pt-5">
+                        <h5>Потраченное время пользователями:</h5>
+                        @foreach (User user in Groups.Last().Where(task => task.User != null).Select(task => task.User).Distinct())
+                        {
+                            <label>@user.Name</label>
+                            <b class="me-5">@Groups.Last().Where(task => task.User == user && task.TrackedTime != null).Select(task => (TimeSpan)task.TrackedTime).Aggregate(TimeSpan.Zero, (acc, t) => acc + t).ToString("hh\\:mm")</b>
+                        }
+                    </div>
+                </div>
+                <div class="ms-5 me-5"></div>
+            }
+        </div>
+        <div id="journalContainer" class="justify-content-center p-3 overflow-auto">
+        </div>
+    </div>
+</div>
+
+<script>
+    setTimeout(() => {
+        const historyEl = document.getElementById('journal');
+        historyEl.scrollTo({ left: historyEl.scrollWidth, behavior: 'smooth' });
+        const lastDateBtn = document.querySelector('.date-btn:last-of-type');
+        if (lastDateBtn) {
+            lastDateBtn.click();
+        }
+    }, 200);
+
+    document.querySelectorAll('.date-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const selectedDate = this.getAttribute('data-date');
+
+            loadJournalForDate(selectedDate);
+
+            document.querySelectorAll('.date-btn').forEach(b => {
+                b.classList.remove('btn-info', 'btn-primary');
+                b.classList.add('btn-primary');
+            });
+
+            this.classList.remove('btn-primary');
+            this.classList.add('btn-info');
+        });
+    });
+
+    function loadJournalForDate(date) {
+        const container = document.getElementById('journalContainer');
+        container.innerHTML = document.getElementById(date).innerHTML;
+    }
+</script>

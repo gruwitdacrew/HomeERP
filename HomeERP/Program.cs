@@ -1,6 +1,6 @@
+using HomeERP.Domain.Common.Contexts;
+using HomeERP.Domain.Common.Repositories;
 using HomeERP.Services;
-using HomeERP.Services.Utils.FileService;
-using Logistics.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,13 +8,18 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<AppDBContext>(options => options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "Server=localhost;Port=5432;Database=HomeERP;Username=postgres;Password=admin"));
+builder.Services.AddDbContext<AppDBContext>(options => 
+{
+    options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? "Server=localhost;Port=5432;Database=HomeERP;Username=postgres;Password=admin");
+});
+builder.Services.AddScoped<FileStorageContext>();
+
+builder.Services.AddTransient(typeof(BaseEntityRepository<>));
+builder.Services.AddTransient(typeof(GenericRepository<>));
+builder.Services.AddTransient(typeof(FileRepository));
 
 builder.Services.AddScoped<EAVService>();
-
-builder.Services.AddScoped<FileService>();
 builder.Services.AddScoped<FileOverviewService>();
-
 builder.Services.AddScoped<ChoreService>();
 
 

@@ -1,9 +1,23 @@
-﻿@using HomeERP.Models.EAV.Domain;
-@using HomeERP.Models.Chore.Domain;
-@using Attribute = HomeERP.Models.EAV.Domain.Attribute;
-@using Object = HomeERP.Models.EAV.Domain.Object;
+﻿@using HomeERP.Domain.EAV.Models;
+@using HomeERP.Domain.Chores.Models;
+@using Attribute = HomeERP.Domain.EAV.Models.Attribute;
+@using Object = HomeERP.Domain.EAV.Models.Object;
+@using Task = HomeERP.Domain.Chores.Models.Task;
+@using HomeERP.Domain.Common.Models;
 @model Chore
 
+<div class="modal fade" id="ChoreJournalModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Просмотр журнала выполнения</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body" id="ChoreJournal">
+            </div>
+        </div>
+    </div>
+</div>
 <form asp-action="DoChore" asp-controller="Chore" method="post" style="height:100%">
     <input name="ChoreId" type="hidden" value="@Model.Id"/>
     <div class="card d-flex flex-column h-100">
@@ -13,42 +27,85 @@
         <div class="card-body p-0 d-flex flex-column">
             <div class="w-100 border-bottom border-2" style="min-height:50px; position: relative;"><h4 style="padding-left:50px; position: absolute; bottom: 0;">@Model.Name</h4></div>
             <div class="w-100 px-5 flex-grow-1 overflow-hidden">
-                <div class="w-100 h-100 gap-1 border-start border-end border-2 p-5 overflow-auto">
+                <div class="w-100 h-100 gap-1 border-start border-end border-2 p-5 overflow-auto trackTime">
                     @{
                         int k = 0;
                     }
-                    @foreach (Object Object in Model.Attribute.Entity.Objects ?? new List<Object>())
+                    @foreach (Task task in Model.Tasks)
                     {
-                        int DaysLeft;
-                        string backgroundColor;
+                        string TimeLeft;
+                        string backgroundColor = "#dee2e6";
 
-                        if (Model.WarningType == WarningType.After)
+                        if (task.ExecutionMoment == null)
                         {
-                            DaysLeft = (((DateTime)(Object.AttributeValues.First(AttributeValue => AttributeValue.Attribute == Model.Attribute) as DateAttributeValue).Value).AddDays(Model.DeltaTimeInDays) - DateTime.UtcNow).Days;
+                            TimeLeft = "Нет даты";
                         }
                         else
                         {
-                            DaysLeft = (((DateTime)(Object.AttributeValues.First(AttributeValue => AttributeValue.Attribute == Model.Attribute) as DateAttributeValue).Value).AddDays(-Model.DeltaTimeInDays) - DateTime.UtcNow).Days;
-                        }
-                        if (DaysLeft < 0) backgroundColor = "#feb272";
-                        else if (DaysLeft < 3)
-                        {
-                            backgroundColor = "#6ea8fe";
-                        }
-                        else
-                        {
-                            backgroundColor = "#dee2e6";
-                        }
+                            var diff = (DateTime)task.ExecutionMoment - DateTime.UtcNow;
+                            var totalMinutes = Math.Abs(diff.TotalMinutes);
+                            var totalHours = Math.Abs(diff.TotalHours);
+                            var totalDays = Math.Abs(diff.TotalDays);
 
-                        <label class="card pop" style="background-color: @backgroundColor" for="checkbox-@Object.Id">
+                            if (diff.Days < 1)
+                            {
+                                backgroundColor = "#feb272";
+                            }
+                            else if (diff.Days < 2) backgroundColor = "#6ea8fe";
+                            else backgroundColor = "#dee2e6";
+
+                            if (totalMinutes < 30)
+                            {
+                                TimeLeft = diff.TotalMinutes < 0 ? "Просрочено менее чем на 30 минут" : "Осталось менее чем на 30 минут";
+                            }
+                            else if (totalDays >= 1)
+                            {
+                                // Остальные случаи, отображаем разницу в днях
+                                int days = (int)Math.Round(totalDays);
+                                if (diff.TotalDays < 0)
+                                {
+                                    TimeLeft = $"Просрочено {Math.Abs(days)} дня(-ей)";
+                                }
+                                else
+                                {
+                                    TimeLeft = $"Осталось {days} дня(-ей)";
+                                }
+                            }
+                            else
+                            {
+                                // Кратное целым часам
+                                int hours = (int)Math.Round(totalHours);
+                                if (diff.TotalHours < 0)
+                                {
+                                    TimeLeft = $"Просрочено {Math.Abs(hours)} часа(-ов)";
+                                }
+                                else
+                                {
+                                    TimeLeft = $"Осталось {hours} часа(-ов)";
+                                }
+                            }
+                        }
+                        <label class="card pop" style="background-color: @backgroundColor" for="checkbox-@task.Id">
                             <div class="card-body d-flex justify-content-between">
                                 <span class="flex-grow-1 ps-3 text-truncate">
-                                    <input name="Tasks[@k].ObjectId" type="hidden" value="@Object.Id" />
-                                    <input id="checkbox-@Object.Id" name="Tasks[@k].IsDone" class="form-check-input" type="checkbox">
-                                    @Object.Name
+                                    <input onclick="selectTask(this)" id="checkbox-@task.Id" name="TaskIds" class="form-check-input" type="checkbox" value="@task.Id">
+                                    @task.Object.Name
                                 </span>
-                                <span class="w-25 text-center text-truncate">@(DaysLeft < 0 ? $"Просрочено дней: {-DaysLeft}" : $"Осталось дней: {DaysLeft}")</span>
-                                <p style="width:35%"></p>
+                                <span class="w-25 text-center text-truncate">@TimeLeft</span>
+                                <select onchange="selectTaskUser('@task.Id', this)" class="form-select form-select-sm w-25 text-center text-truncate">
+                                    <option>Не назначено</option>
+                                    @foreach (User user in (List<User>)ViewData["Users"])
+                                    {
+                                        if (user == task.User)
+                                        {
+                                            <option value="@user.Id" selected>@user.Name</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@user.Id">@user.Name</option>
+                                        }
+                                    }
+                                </select>
                             </div>
                         </label>
                         k++;
@@ -57,8 +114,20 @@
             </div>
             <div class="w-100 border-top border-2 d-flex text-truncate" style="min-height:60px;">
                 <p class="flex-grow-1"></p>
-                <h5 class="m-0 d-flex align-items-center">Новое значение для "@Model.Attribute.Name":</h5>
-                <input name="NewDate" class="form-control m-2 text-center" style="width: 15%" type="date" />
+                @{
+                    if (Model.Type == ChoreType.Plan)
+                    {
+                        <div class="d-flex flex-row" style="width:35%">
+                            <h5 class="m-0 d-flex align-items-center">Следующее выполнение:</h5>
+                            <input name="NewDate" class="form-control m-2 text-center flex-grow-1" type="date" />
+                        </div>
+                    }
+                    <div id="trackTime" style="display: none; width: 35%" class="flex-row">
+                        <h5 class="m-0 d-flex align-items-center">Время выполнения:</h5>
+                        <input name="TrackedTime" class="form-control m-2 text-center flex-grow-1" type="time" />
+                    </div>
+                }
+                <button type="button" onclick="choreJournal('@Model.Id')" class="btn btn-info m-2" data-bs-toggle="modal" data-bs-target="#ChoreJournalModal">Журнал выполнения</button>
                 <button class="btn btn-primary m-2" type="submit">Выполнить</button>
             </div>
         </div>
@@ -75,3 +144,35 @@
         transform: scale(0.99);
     }
 </style>
+
+<script>
+    function selectTask(checkbox) {
+        const div = checkbox.closest('div.trackTime');
+        const inputs = div.querySelectorAll('input[type=checkbox]');
+        const allChecked = Array.from(inputs).filter(input => input.checked).length;
+        if (allChecked < 1)
+        {
+            document.getElementById('trackTime').style.display = 'none';
+        }
+        else if (allChecked > 1) document.getElementById('trackTime').style.display = 'none';
+        else
+        {
+            document.getElementById('trackTime').style.display = 'flex';
+        }
+    }
+    function selectTaskUser(taskId, selectedUserOption)
+    {
+        location.href = '@Url.Action("AssignUserToTask", "Chore")?taskId=' + taskId + '&userId=' + selectedUserOption.value;
+    }
+    function choreJournal(choreId)
+    {
+        $.ajax({
+            url: `/Chore/ChoreJournal`,
+            type: 'GET',
+            data: { choreId: choreId },
+            success: function (data) {
+                $("#ChoreJournal").html(data);
+            }
+        });
+    }
+</script>

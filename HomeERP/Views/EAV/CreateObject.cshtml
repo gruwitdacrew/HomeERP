@@ -1,7 +1,6 @@
-﻿@using HomeERP.Models.EAV.DTOs.Response
-@using HomeERP.Models.EAV.Domain
-@using Attribute = HomeERP.Models.EAV.Domain.Attribute
-@using Object = HomeERP.Models.EAV.Domain.Object
+﻿@using HomeERP.Domain.EAV.Models
+@using Attribute = HomeERP.Domain.EAV.Models.Attribute
+@using Object = HomeERP.Domain.EAV.Models.Object
 @model Entity
 
 @using (Html.BeginForm("CreateObject", "EAV", FormMethod.Post, new { enctype = "multipart/form-data" }))
@@ -52,10 +51,10 @@
                                                 <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
                                                 <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Link" />
                                                 <select name="RawAttributeValues[@k].AttributeValue" class="form-select">
-                                                    @foreach (Object Object in LinkAttribute.EntityObjects)
-                                                    {
-                                                        <option value="@Object.Id">@Object.Name</option>
-                                                    }
+                                                @foreach (Object Object in LinkAttribute.LinkedEntity.Objects)
+                                                {
+                                                    <option value="@Object.Id">@Object.Name</option>
+                                                }
                                                 </select>
                                             }
                                             else if (Attribute.Type == AttributeType.File)

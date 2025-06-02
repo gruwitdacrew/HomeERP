@@ -1,11 +1,13 @@
 using HomeERP.Services;
 using Microsoft.AspNetCore.Mvc;
-using Attribute = HomeERP.Models.EAV.Domain.Attribute;
-using Object = HomeERP.Models.EAV.Domain.Object;
-using HomeERP.Models.EAV.Domain;
-using HomeERP.Models.EAV.DTOs.Response;
-using HomeERP.Models.EAV.DTOs.Request;
-using HomeERP.Models.EAV.DTOs;
+using HomeERP.Views.EAV.DTOs;
+using HomeERP.Views.EAV.DTOs.Request;
+using Attribute = HomeERP.Domain.EAV.Models.Attribute;
+using Object = HomeERP.Domain.EAV.Models.Object;
+using HomeERP.Domain.EAV.Models;
+using HomeERP.Domain.Common.Models;
+using HomeERP.Domain.Common;
+using Microsoft.AspNetCore.Http.Extensions;
 
 namespace HomeERP.Controllers
 {
@@ -29,14 +31,16 @@ namespace HomeERP.Controllers
         {
             TempData["Entities"] = _entitiesService.GetEntities();
 
-            return PartialView(_entitiesService.GetEntityObjects(EntityId));
+            Entity entity = _entitiesService.GetEntity(EntityId);
+            _entitiesService.GetEntityObjects(entity);
+
+            return PartialView(entity);
         }
 
         public IActionResult SearchObjects(SearchObjectsRequest SearchObjectsRequest)
         {
-            Entity Entity = _entitiesService.GetEntity(SearchObjectsRequest.EntityId);
-            List<Attribute> Attributes = _entitiesService.GetEntityAttributes(SearchObjectsRequest.EntityId);
-            List<Object> Objects = _entitiesService.SearchEntityObjects(SearchObjectsRequest);
+            Entity entity = _entitiesService.GetEntity(SearchObjectsRequest.EntityId);
+            _entitiesService.SearchEntityObjects(SearchObjectsRequest, entity);
 
             TempData["NameSearchAttribute"] = SearchObjectsRequest.NameSearchAttribute;
             foreach (var SearchAttribute in SearchObjectsRequest.SearchAttributes)
@@ -46,7 +50,7 @@ namespace HomeERP.Controllers
 
             TempData["Entities"] = _entitiesService.GetEntities();
 
-            return PartialView("Entity", Entity);
+            return PartialView("Entity", entity);
         }
 
         [HttpGet]
@@ -64,7 +68,7 @@ namespace HomeERP.Controllers
             {
                 if (AttributeRaw.AttributeType == AttributeType.Link)
                 {
-                    Entity.Attributes.Add(new LinkAttribute(AttributeRaw, Entity));
+                    Entity.Attributes.Add(new LinkAttribute(AttributeRaw, Entity, _entitiesService.GetEntity(new Guid(AttributeRaw.Args[0]))));
                 }
                 else Entity.Attributes.Add(new Attribute(AttributeRaw, Entity));
             }
@@ -74,85 +78,85 @@ namespace HomeERP.Controllers
             return RedirectToAction("Explorer", "EAV", new { EntityId = Entity.Id });
         }
 
-        public IActionResult DeleteEntity(Guid EntityId)
+        public IActionResult DeleteEntity(Guid entityId)
         {
-            _entitiesService.DeleteEntity(EntityId);
+            Entity entity = _entitiesService.GetEntity(entityId);
+            _entitiesService.DeleteEntity(entity);
 
             return RedirectToAction("Explorer", "EAV");
         }
 
 
-        public IActionResult DeleteObject(Guid ObjectId)
+        public IActionResult DeleteObject(Guid objectId)
         {
-            Entity Entity = _entitiesService.GetObjectEntity(ObjectId);
-            _entitiesService.DeleteObject(ObjectId);
-
-            return RedirectToAction("Explorer", "EAV", new { EntityId = Entity.Id });
-        }
-
-        [HttpPost]
-        public IActionResult CreateObject(CreateObjectRequest request)
-        {
-            Object Object = new Object(request.ObjectName, _entitiesService.GetEntity(request.EntityId));
-            List<Attribute> Attributes = _entitiesService.GetEntityAttributes(request.EntityId);
-
-            foreach (AttributeValueDTO AttributeValueRaw in request.RawAttributeValues ?? new List<AttributeValueDTO>())
-            {
-                Attribute Attribute = Attributes.First(Attribute => Attribute.Id == AttributeValueRaw.AttributeId);
-
-                switch (Attribute.Type)
-                {
-                    case AttributeType.Integer:
-                        {
-                            Object.AttributeValues.Add(new IntegerAttributeValue(AttributeValueRaw.AttributeValue != null ? int.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute));
-                            break;
-                        }
-                    case AttributeType.String:
-                        {
-                            Object.AttributeValues.Add(new StringAttributeValue(AttributeValueRaw.AttributeValue, Object, Attribute));
-                            break;
-                        }
-                    case AttributeType.Date:
-                        {
-                            Object.AttributeValues.Add(new DateAttributeValue(AttributeValueRaw.AttributeValue != null ? DateTime.Parse(AttributeValueRaw.AttributeValue).ToUniversalTime() : null, Object, Attribute));
-                            break;
-                        }
-                    case AttributeType.Link:
-                        {
-                            Object.AttributeValues.Add(new LinkAttributeValue(AttributeValueRaw.AttributeValue != null ? Guid.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute));
-                            break;
-                        }
-                    case AttributeType.File:
-                        {
-                            Object.AttributeValues.Add(new FileAttributeValue(AttributeValueRaw.File != null ? Guid.NewGuid() : null, AttributeValueRaw.File, Object, Attribute));
-                            break;
-                        }
-                    case AttributeType.Float:
-                        {
-                            Object.AttributeValues.Add(new FloatAttributeValue(AttributeValueRaw.AttributeValue != null ? float.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute));
-                            break;
-                        }
-                }
-            }
-
-            _entitiesService.CreateObject(Object);
+            Object Object = _entitiesService.GetObjectCurrent(objectId);
+            _entitiesService.DeleteObject(Object);
 
             return RedirectToAction("Explorer", "EAV", new { EntityId = Object.Entity.Id });
         }
 
         [HttpPost]
-        public IActionResult EditObject(EditObjectRequest request)
+        public async Task<IActionResult> CreateObject(CreateObjectRequest request)
         {
-            Object Object = _entitiesService.GetObject(request.ObjectId);
-            List<Attribute> Attributes = _entitiesService.GetEntityAttributes(Object.Entity.Id);
+            Object Object = new Object(request.ObjectName, _entitiesService.GetEntity(request.EntityId));
+            User user = _entitiesService.GetCurrentUser();
+
+            foreach (AttributeValueDTO AttributeValueRaw in request.RawAttributeValues ?? new List<AttributeValueDTO>())
+            {
+                Attribute Attribute = Object.Entity.Attributes.First(Attribute => Attribute.Id == AttributeValueRaw.AttributeId);
+
+                switch (Attribute.Type)
+                {
+                    case AttributeType.Integer:
+                        {
+                            Object.AttributeValues.Add(new IntegerAttributeValue(AttributeValueRaw.AttributeValue != null ? int.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute, user));
+                            break;
+                        }
+                    case AttributeType.String:
+                        {
+                            Object.AttributeValues.Add(new StringAttributeValue(AttributeValueRaw.AttributeValue, Object, Attribute, user));
+                            break;
+                        }
+                    case AttributeType.Date:
+                        {
+                            Object.AttributeValues.Add(new DateAttributeValue(AttributeValueRaw.AttributeValue != null ? DateTime.Parse(AttributeValueRaw.AttributeValue).ToUniversalTime() : null, Object, Attribute, user));
+                            break;
+                        }
+                    case AttributeType.Link:
+                        {
+                            Object.AttributeValues.Add(new LinkAttributeValue(AttributeValueRaw.AttributeValue != null ? Guid.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute, user));
+                            break;
+                        }
+                    case AttributeType.File:
+                        {
+                            Object.AttributeValues.Add(new FileAttributeValue(AttributeValueRaw.File != null ? Guid.NewGuid() : null, AttributeValueRaw.File, Object, Attribute, user));
+                            break;
+                        }
+                    case AttributeType.Float:
+                        {
+                            Object.AttributeValues.Add(new FloatAttributeValue(AttributeValueRaw.AttributeValue != null ? float.Parse(AttributeValueRaw.AttributeValue) : null, Object, Attribute, user));
+                            break;
+                        }
+                }
+            }
+
+            await _entitiesService.CreateObject(Object);
+
+            return RedirectToAction("Explorer", "EAV", new { EntityId = Object.Entity.Id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditObject(EditObjectRequest request)
+        {
+            Object Object = _entitiesService.GetObjectCurrent(request.ObjectId);
+            User user = _entitiesService.GetCurrentUser();
 
             List<AttributeValue> NewAttributeValues = new List<AttributeValue>();
 
             Object.Name = request.ObjectName;
             foreach (AttributeValueDTO AttributeValueRaw in request.RawAttributeValues ?? new List<AttributeValueDTO>())
             {
-                Attribute Attribute = Attributes.First(Attribute => Attribute.Id == AttributeValueRaw.AttributeId);
-
+                Attribute Attribute = Object.Entity.Attributes.First(Attribute => Attribute.Id == AttributeValueRaw.AttributeId);
                 AttributeValue AttributeValueOld = Object.AttributeValues.First(AttributeValue => AttributeValue.AttributeId == Attribute.Id && AttributeValue.IsCurrent);
 
                 switch (Attribute.Type)
@@ -162,15 +166,8 @@ namespace HomeERP.Controllers
                             int? NewValue = AttributeValueRaw.AttributeValue != null ? int.Parse(AttributeValueRaw.AttributeValue) : null;
                             if (((IntegerAttributeValue)AttributeValueOld).Value != NewValue)
                             {
-                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
-                                {
-                                    ((IntegerAttributeValue)AttributeValueOld).Value = NewValue;
-                                }
-                                else
-                                {
-                                    AttributeValueOld.IsCurrent = false;
-                                    NewAttributeValues.Add(new IntegerAttributeValue(NewValue, Object, Attribute));
-                                }
+                                AttributeValueOld.IsCurrent = false;
+                                Object.AttributeValues.Add(new IntegerAttributeValue(NewValue, Object, Attribute, user));
                             }
                             break;
                         }
@@ -178,15 +175,8 @@ namespace HomeERP.Controllers
                         {
                             if (((StringAttributeValue)AttributeValueOld).Value != AttributeValueRaw.AttributeValue)
                             {
-                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
-                                {
-                                    ((StringAttributeValue)AttributeValueOld).Value = AttributeValueRaw.AttributeValue;
-                                }
-                                else
-                                {
-                                    AttributeValueOld.IsCurrent = false;
-                                    NewAttributeValues.Add(new StringAttributeValue(AttributeValueRaw.AttributeValue, Object, Attribute));
-                                }
+                                AttributeValueOld.IsCurrent = false;
+                                Object.AttributeValues.Add(new StringAttributeValue(AttributeValueRaw.AttributeValue, Object, Attribute, user));
                             }
                             break;
                         }
@@ -196,15 +186,8 @@ namespace HomeERP.Controllers
                             DateTime? NewValue = AttributeValueRaw.AttributeValue != null ? DateTime.Parse(AttributeValueRaw.AttributeValue).ToUniversalTime() : null;
                             if (((DateAttributeValue)AttributeValueOld).Value != NewValue)
                             {
-                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
-                                {
-                                    ((DateAttributeValue)AttributeValueOld).Value = NewValue;
-                                }
-                                else
-                                {
-                                    AttributeValueOld.IsCurrent = false;
-                                    NewAttributeValues.Add(new DateAttributeValue(NewValue, Object, Attribute));
-                                }
+                                AttributeValueOld.IsCurrent = false;
+                                Object.AttributeValues.Add(new DateAttributeValue(NewValue, Object, Attribute, user));
                             }
                             break;
                         }
@@ -213,15 +196,8 @@ namespace HomeERP.Controllers
                             Guid? NewValue = AttributeValueRaw.AttributeValue != null ? Guid.Parse(AttributeValueRaw.AttributeValue) : null;
                             if (((LinkAttributeValue)AttributeValueOld).Value != NewValue)
                             {
-                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
-                                {
-                                    ((LinkAttributeValue)AttributeValueOld).Value = NewValue;
-                                }
-                                else
-                                {
-                                    AttributeValueOld.IsCurrent = false;
-                                    NewAttributeValues.Add(new LinkAttributeValue(NewValue, Object, Attribute));
-                                }
+                                AttributeValueOld.IsCurrent = false;
+                                Object.AttributeValues.Add(new LinkAttributeValue(NewValue, Object, Attribute, user));
                             }
                             break;
                         }
@@ -229,7 +205,11 @@ namespace HomeERP.Controllers
                         {
 
                             ((FileAttributeValue)AttributeValueOld).File = AttributeValueRaw.File;
-                            if (AttributeValueRaw.File != null) ((FileAttributeValue)AttributeValueOld).FileId = Guid.NewGuid();
+                            if (AttributeValueRaw.File != null)
+                            {
+                                ((FileAttributeValue)AttributeValueOld).FileId = Guid.NewGuid();
+                                await _entitiesService.DeleteFile((FileAttributeValue)AttributeValueOld);
+                            }
                             break;
                         }
                     case AttributeType.Float:
@@ -237,36 +217,30 @@ namespace HomeERP.Controllers
                             float? NewValue = AttributeValueRaw.AttributeValue != null ? float.Parse(AttributeValueRaw.AttributeValue) : null;
                             if (((FloatAttributeValue)AttributeValueOld).Value != NewValue)
                             {
-                                if ((DateTime.UtcNow - ((DateTime)AttributeValueOld.ChangeDate)).Days <= 0)
-                                {
-                                    ((FloatAttributeValue)AttributeValueOld).Value = NewValue;
-                                }
-                                else
-                                {
-                                    AttributeValueOld.IsCurrent = false;
-                                    NewAttributeValues.Add(new FloatAttributeValue(NewValue, Object, Attribute));
-                                }
+                                AttributeValueOld.IsCurrent = false;
+                                Object.AttributeValues.Add(new FloatAttributeValue(NewValue, Object, Attribute, user));
                             }
                             break;
                         }
                 }
             }
 
-            _entitiesService.UpdateObject(Object, NewAttributeValues);
+            await _entitiesService.UpdateObject(Object);
 
             return RedirectToAction("Explorer", "EAV", new { EntityId = Object.Entity.Id });
         }
 
         [HttpGet]
-        public FileContentResult GetFile(Guid FileId)
+        public async Task<FileContentResult> GetFile(Guid FileId)
         {
-            return _entitiesService.GetFile(FileId);
+            return await _entitiesService.GetFile(FileId);
         }
 
-        public IActionResult DeleteFile(Guid FileId)
+        public async Task<IActionResult> DeleteFile(Guid FileId)
         {
             FileAttributeValue FileAttributeValue = _entitiesService.GetFileAttributeValue(FileId);
-            _entitiesService.DeleteFile(FileAttributeValue);
+            await _entitiesService.DeleteFile(FileAttributeValue);
+
             return RedirectToAction("Explorer", "EAV", new { EntityId = FileAttributeValue.Attribute.Entity.Id });
         }
 
@@ -293,7 +267,7 @@ namespace HomeERP.Controllers
 
             if (AttributeDTO.AttributeType == AttributeType.Link)
             {
-                Attribute = new LinkAttribute(AttributeDTO, Entity);
+                Attribute = new LinkAttribute(AttributeDTO, Entity, _entitiesService.GetEntity(new Guid(AttributeDTO.Args[0])));
             }
             else Attribute = new Attribute(AttributeDTO, Entity);
 
@@ -302,12 +276,42 @@ namespace HomeERP.Controllers
             return RedirectToAction("Explorer", "EAV", new { EntityId = EntityId });
         }
 
-        public IActionResult ObjectHistory(Guid ObjectId)
+        public IActionResult ObjectHistory(Guid objectId)
         {
-            Object Object = _entitiesService.GetObject(ObjectId);
-            _entitiesService.GetObjectHistory(Object);
+            Object Object = _entitiesService.GetObjectWithHistory(objectId);
 
             return PartialView(Object);
+        }
+
+        [HttpPost]
+        public IActionResult AddUser(string userName)
+        {
+            User user = new User(userName);
+            _entitiesService.AddUser(user);
+
+            return RedirectToAction("GetUsers", "EAV");
+        }
+
+        public IActionResult DeleteUser(Guid userId, string returnUrl)
+        {
+            _entitiesService.DeleteUser(userId);
+
+            Storage.SessionUserId = _entitiesService.GetUsers().First().Id;
+
+            return Redirect(returnUrl);
+        }
+
+        public IActionResult SelectUser(Guid userId, string returnUrl)
+        {
+            Storage.SessionUserId = userId;
+
+            return Redirect(returnUrl);
+        }
+
+        [HttpGet]
+        public IActionResult GetUsers()
+        {
+            return PartialView("UserList", _entitiesService.GetUsers());
         }
     }
 }
