@@ -51,6 +51,7 @@
                                                 <input name="RawAttributeValues[@k].AttributeId" type="hidden" value="@Attribute.Id" />
                                                 <input name="RawAttributeValues[@k].AttributeType" type="hidden" value="Link" />
                                                 <select name="RawAttributeValues[@k].AttributeValue" class="form-select">
+                                                <option></option>
                                                 @foreach (Object Object in LinkAttribute.LinkedEntity.Objects)
                                                 {
                                                     <option value="@Object.Id">@Object.Name</option>

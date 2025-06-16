@@ -1,4 +1,4 @@
-using HomeERP.Services;
+using HomeERP.Logic;
 using Microsoft.AspNetCore.Mvc;
 using HomeERP.Views.EAV.DTOs;
 using HomeERP.Views.EAV.DTOs.Request;
@@ -14,10 +14,12 @@ namespace HomeERP.Controllers
     public class EAVController : Controller
     {
         private readonly EAVService _entitiesService;
+        private readonly ProductService _productService;
 
-        public EAVController(EAVService entitiesService)
+        public EAVController(EAVService entitiesService, ProductService productService)
         {
             _entitiesService = entitiesService;
+            _productService = productService;
         }
 
         public IActionResult Explorer(Guid? EntityId)
@@ -98,7 +100,8 @@ namespace HomeERP.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateObject(CreateObjectRequest request)
         {
-            Object Object = new Object(request.ObjectName, _entitiesService.GetEntity(request.EntityId));
+            Entity entity = _entitiesService.GetEntity(request.EntityId);
+            Object Object = new Object(request.ObjectName, entity);
             User user = _entitiesService.GetCurrentUser();
 
             foreach (AttributeValueDTO AttributeValueRaw in request.RawAttributeValues ?? new List<AttributeValueDTO>())
@@ -141,6 +144,8 @@ namespace HomeERP.Controllers
             }
 
             await _entitiesService.CreateObject(Object);
+
+            if (entity.Id == new Guid("e2603327-15ec-4b67-96f0-be16467a9dbf")) _productService.AddProductToInventory(Object);
 
             return RedirectToAction("Explorer", "EAV", new { EntityId = Object.Entity.Id });
         }
@@ -205,10 +210,13 @@ namespace HomeERP.Controllers
                         {
 
                             ((FileAttributeValue)AttributeValueOld).File = AttributeValueRaw.File;
+                            if (((FileAttributeValue)AttributeValueOld).FileId != null)
+                            {
+                                await _entitiesService.DeleteFile((FileAttributeValue)AttributeValueOld);
+                            }
                             if (AttributeValueRaw.File != null)
                             {
                                 ((FileAttributeValue)AttributeValueOld).FileId = Guid.NewGuid();
-                                await _entitiesService.DeleteFile((FileAttributeValue)AttributeValueOld);
                             }
                             break;
                         }

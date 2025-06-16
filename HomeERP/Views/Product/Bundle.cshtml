@@ -1,0 +1,35 @@
+﻿@using HomeERP.Domain.EAV.Models
+@using HomeERP.Domain.Product.Models
+@model ProductBundle
+
+<div class="modal-header">
+    <h5 class="modal-title" id="exampleModalLabel">Просмотр набора</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+</div>
+<div class="modal-body">
+    <div class="card">
+        <div class="card-header">
+            @Model.Name
+        </div>
+        <div class="card-body d-flex flex-column gap-4">
+            @foreach (ProductInCollection productInCollection in Model.Products)
+            {
+                <div class="d-flex flex-row justify-content-around">
+                    <span class="w-25">@productInCollection.Product.Name</span>
+                    <span></span>
+                    <span class="w-25">@productInCollection.Amount</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+<div class="modal-footer d-flex justify-content-between">
+    <div>
+        <button type="button" class="btn btn-primary" onclick="location.href='@Url.Action("UseBundle", "Product", new { BundleId = Model.Id })'">Израсходовать</button>
+        <button type="button" class="btn btn-success" onclick="location.href='@Url.Action("AddBundleToShoppingList", "Product", new { BundleId = Model.Id })'">Добавить в список покупок</button>
+    </div>
+    <div>
+        <button type="button" class="btn btn-danger" onclick="location.href='@Url.Action("DeleteBundle", "Product", new { BundleId = Model.Id })'">Удалить</button>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Закрыть</button>
+    </div>
+</div>

@@ -1,6 +1,7 @@
 using HomeERP.Domain.Common.Contexts;
 using HomeERP.Domain.Common.Repositories;
-using HomeERP.Services;
+using HomeERP.Logic;
+using HomeERP.Logic.Utils;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,11 @@ builder.Services.AddTransient(typeof(FileRepository));
 builder.Services.AddScoped<EAVService>();
 builder.Services.AddScoped<FileOverviewService>();
 builder.Services.AddScoped<ChoreService>();
+builder.Services.AddScoped<ProductService>();
+
+builder.Services.AddSingleton<TelegramBot>();
+builder.Services.AddSingleton<IHostedService>(p => p.GetRequiredService<TelegramBot>());
+builder.Services.AddHostedService<Notifier>();
 
 
 var app = builder.Build();

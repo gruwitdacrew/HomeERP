@@ -1,0 +1,225 @@
+﻿@using HomeERP.Domain.EAV.Models
+@using HomeERP.Domain.Product.Models
+@using Object = HomeERP.Domain.EAV.Models.Object
+@model Inventory
+
+@{
+    await Html.RenderPartialAsync("CreateBundle", TempData["ProductsEntity"]);
+}
+<div class="modal fade" id="BundleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="ViewBundle">
+        </div>
+    </div>
+</div>
+@{
+    int k = 0;
+}
+<form asp-action="EditShoppingList" asp-controller="Product" id="formEditShoppingList">
+    <div class="modal fade" id="ShoppingListModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Просмотр списка покупок</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="card">
+                        <div class="card-header">
+                            Список покупок
+                        </div>
+                        <div class="card-body d-flex flex-column gap-4" id="ProductContainer">
+                            @foreach (var productInCollection in (TempData["ShoppingList"] as ShoppingList).Products)
+                            {
+                                <div id="@k" class="d-flex flex-row justify-content-around field-group">
+                                    <select class="form-select ms-2 me-2" name="Products[].ProductId" required>
+                                        @foreach (Object Object in (TempData["ProductsEntity"] as Entity).Objects)
+                                        {
+                                            if (Object.Id == productInCollection.Product.Id)
+                                            {
+                                                <option value="@Object.Id" selected>@Object.Name</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@Object.Id">@Object.Name</option>
+                                            }
+                                        }
+                                    </select>
+                                    <input class="form-control me-2" name="Products[].ProductAmount" type="number" placeholder="Введите количество..." required value="@productInCollection.Amount">
+                                    <button type="button" class="remove-field btn btn-danger ms-2" onclick="Remove('@k')">Удалить</button>
+                                </div>
+                                k++;
+                            }
+                        </div>
+                        <button type="button" class="remove-field btn btn-primary" id="addProduct">Добавить товар</button>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-success" onclick="location.href='@Url.Action("BuyProductsFromShoppingList", "Product")'">Купить</button>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn btn-primary">Сохранить</button>
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Закрыть</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+<div class="d-flex justify-content-around" style="height: calc(100vh - 150px)">
+    <div class="w-25 p-5 h-100">
+        <div class="card w-100 h-100">
+            <div class="card-header text-center" style="height:50px;">
+                <h5>Наборы товаров</h5>
+            </div>
+            <div class="card-body p-3 w-100 h-100 d-flex flex-column gap-1 overflow-auto">
+                @foreach (var bundle in TempData["Bundles"] as List<ProductBundle>)
+                {
+                    <button id="@bundle.Id" type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#BundleModal" onclick="SelectBundle(this.id)">@bundle.Name</button>
+                }
+            </div>
+            <div class="card-footer d-flex flex-row justify-content-between p-1 gap-1" style="height:50px;">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#CreateBundleModal">Создать набор</button>
+                <button class="btn btn-danger" onclick="DeleteBundle()">Удалить</button>
+            </div>
+        </div>
+    </div>
+    <div class="w-75 h-100 p-5 d-flex flex-column">
+        <div class="card w-100 h-100">
+            <div class="card-header text-center d-flex flex-row justify-content-center" style="height:50px;"><h5 class="h-100 m-0 d-flex align-items-center pe-3">Просмотр инвентаря</h5></div>
+            <div class="card-body overflow-auto p-0">
+                <table id="table" class="table table-hover text-center m-0">
+                    <thead>
+                        <tr>
+                            <th scope="col" style="width:50px"></th>
+                            <th>Название</th>
+                            <th>Количество</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            k = 1;
+                        }
+                        @foreach (ProductInCollection product in Model.Products ?? Enumerable.Empty<ProductInCollection>())
+                        {
+                            <tr id="tableRow-@product.Product.Id" onclick="SelectProduct('@product.Product.Id')">
+                                <th scope="row">
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">@k</div>
+                                </th>
+                                <td>
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                        <span>@product.Product.Name</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="height:50px" class="d-flex justify-content-center align-items-center">
+                                        <span>@product.Amount</span>
+                                    </div>
+                                </td>
+                                @{
+                                    k++;
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex flex-row justify-content-start p-1 gap-1" style="height:50px;">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#ShoppingListModal">Список покупок</button>
+                <button id="addToShoppingList" class="btn btn-primary" onclick="addProductToShoppingList()">Добавить в список покупок</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    let ProductCount = document.getElementById('ProductContainer').querySelectorAll('div').length;
+
+    function SelectBundle(selectedBundleId)
+    {
+        $.ajax({
+            url: `/Product/Bundle`,
+            type: 'GET',
+            data: { BundleId: selectedBundleId },
+            success: function (data) {
+                $("#ViewBundle").html(data);
+            }
+        });
+    }
+
+    let SelectedProductId = null;
+
+    function SelectProduct(ProductId)
+    {
+        if (SelectedProductId == ProductId) return;
+
+        let row = document.getElementById('tableRow-'+SelectedProductId);
+        if (row != null) row.classList.remove("table-active");
+
+        SelectedProductId = ProductId;
+
+        row = document.getElementById('tableRow-'+SelectedProductId);
+
+        if (row != null)
+        {
+            if (row != null) row.classList.add("table-active");
+            document.getElementById('addToShoppingList').disabled = false;
+        }
+        else
+        {
+            document.getElementById('addToShoppingList').disabled = true;
+        }
+    }
+
+    function addProductToShoppingList()
+    {
+        location.href='@Url.Action("AddProductToShoppingList", "Product")?productId='+SelectedProductId;
+    }
+
+    function Remove(k)
+    {
+        document.getElementById('ProductContainer').removeChild(document.getElementById(k));
+        ProductCount--;
+    }
+
+    document.getElementById('addProduct').addEventListener('click', function() {
+        const fieldsContainer = document.getElementById('ProductContainer');
+        const fieldGroup = document.createElement('div');
+        fieldGroup.id = ProductCount;
+        fieldGroup.classList = "d-flex flex-row justify-content-around field-group";
+
+        fieldGroup.innerHTML = `
+            <select class="form-select ms-2 me-2" name="Products[].ProductId" required>
+            @foreach (Object Object in (TempData["ProductsEntity"] as Entity).Objects)
+            {
+                <option value="@Object.Id">@Object.Name</option>
+            }
+            </select>
+            <input class="form-control me-2" name="Products[].ProductAmount" type="number" placeholder="Введите количество..." required>
+            <button type="button" class="remove-field btn btn-danger ms-2" onclick="Remove(${ProductCount})">Удалить</button>
+        `;
+        fieldsContainer.appendChild(fieldGroup);
+        ProductCount++;
+    });
+
+    document.getElementById('formEditShoppingList').addEventListener('submit', function() {
+        const items = document.querySelectorAll('#ProductContainer .field-group');
+        items.forEach((item, index) => {
+            item.id = 'product_' + index;
+            const select = item.querySelector('select');
+            if (select) {
+                select.setAttribute('name', `Products[${index}].ProductId`);
+            }
+            const input = item.querySelector('input[type=number]');
+            if (input) {
+                input.setAttribute('name', `Products[${index}].ProductAmount`);
+            }
+
+            const btn = item.querySelector('button.remove-field');
+            if (btn) {
+                btn.setAttribute('onclick', `Remove(${index})`);
+            }
+        });
+    });
+</script>

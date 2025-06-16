@@ -1,5 +1,5 @@
 ﻿using HomeERP.Domain.Common.Repositories;
-using HomeERP.Services;
+using HomeERP.Logic;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HomeERP.Controllers

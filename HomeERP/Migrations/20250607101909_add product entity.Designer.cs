@@ -3,6 +3,7 @@ using System;
 using HomeERP.Domain.Common.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace HomeERP.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250607101909_add product entity")]
+    partial class addproductentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,9 +87,6 @@ namespace HomeERP.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<long?>("ChatId")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -347,13 +347,6 @@ namespace HomeERP.Migrations
                     b.HasBaseType("HomeERP.Domain.Product.Models.ProductCollection");
 
                     b.HasDiscriminator().HasValue("Inventory");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("f6703327-15ec-4b67-96f0-be16467a9dbf"),
-                            Name = "Инвентарь"
-                        });
                 });
 
             modelBuilder.Entity("HomeERP.Domain.Product.Models.ProductBundle", b =>
@@ -368,13 +361,6 @@ namespace HomeERP.Migrations
                     b.HasBaseType("HomeERP.Domain.Product.Models.ProductCollection");
 
                     b.HasDiscriminator().HasValue("ShoppingList");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("c2703327-15ec-4b67-96f0-be16467a9dbf"),
-                            Name = "Список покупок"
-                        });
                 });
 
             modelBuilder.Entity("HomeERP.Domain.Chores.Models.Task", b =>

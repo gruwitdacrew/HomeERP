@@ -10,6 +10,7 @@ namespace HomeERP.Domain.EAV.Models
         public List<Object> Objects { get; set; } = new List<Object>();
         public List<Attribute> Attributes { get; set; } = new List<Attribute>();
 
+        public Entity() {}
         public Entity(string Name)
         {
             Id = Guid.NewGuid();

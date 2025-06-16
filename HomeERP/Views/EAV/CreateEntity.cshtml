@@ -1,7 +1,7 @@
 ﻿@using HomeERP.Domain.EAV.Models
 @model List<Entity>
 
-@using (Html.BeginForm("CreateEntity", "EAV", FormMethod.Post))
+@using (Html.BeginForm("CreateEntity", "EAV", FormMethod.Post, new { id = "formCreateEntity" }))
 {
     <div class="modal fade" id="CreateEntityModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -70,6 +70,40 @@
         fieldGroup.querySelector('.remove-field').addEventListener('click', function() {
             fieldsContainer.removeChild(fieldGroup);
             fieldCount--;
+        });
+    });
+
+        document.getElementById('formCreateEntity').addEventListener('submit', function() {
+        const container = document.getElementById('fieldsContainer'); // ваш контейнер
+        const items = container.querySelectorAll('.field-group'); // все добавленные блоки
+
+        items.forEach((item, index) => {
+            // Обновляем id контейнера (если нужно)
+            item.id = 'field_' + index;
+
+            // Обновляем input name
+            const input = item.querySelector('input[type=text]');
+            if (input) {
+                input.setAttribute('name', `RawAttributes[${index}].AttributeName`);
+            }
+
+            // Обновляем первый селект (AttributeType)
+            const select1 = item.querySelector('select[id^="firstSelect"]');
+            if (select1) {
+                select1.setAttribute('name', `RawAttributes[${index}].AttributeType`);
+            }
+
+            // Обновляем второй селект (Args[0])
+            const select2 = item.querySelector('select[id^="secondSelect"]');
+            if (select2) {
+                select2.setAttribute('name', `RawAttributes[${index}].Args[0]`);
+            }
+
+            // Обновляем кнопку удаления (если она использует индекс для этой функции)
+            const btn = item.querySelector('.remove-field');
+            if (btn) {
+                btn.setAttribute('onclick', `removeField(${index})`);
+            }
         });
     });
 

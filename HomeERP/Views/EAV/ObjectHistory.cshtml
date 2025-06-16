@@ -10,79 +10,52 @@
     <div class="card-body d-flex flex-column gap-3">
         <div id="history" class="d-flex flex-row overflow-auto p-3 h-auto" scrollLeft="">
             @{
-                var Groups = Model.AttributeValues.GroupBy(Object => Object.ChangeDate?.ToString("dd.MM.yyyy")).OrderBy(Group => DateTime.Parse(Group.Key)).ToList();
-                for (int i = 0; i < Groups.Count() - 1; i ++)
+                var Groups = Model.AttributeValues.GroupBy(AttributeValue => AttributeValue.ChangeDate?.ToString("dd.MM.yyyy")).OrderBy(Group => DateTime.Parse(Group.Key)).ToList();
+                for (int i = 0; i < Groups.Count(); i ++)
                 {
-                    <button type="button" class="btn btn-sm btn-primary rounded-pill date-btn" style="width:auto; height:2rem;" data-date="@Groups[i].Key">@Groups[i].Key</button>
-                    <div class="progress progress-bar" style="min-width: 100px; height:2px; margin-top:1rem"></div>
+                    @if (Groups[i] != Groups.Last())
+                    {
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill date-btn" style="width:auto; height:2rem;" data-date="@Groups[i].Key">@Groups[i].Key</button>
+                        <div class="progress progress-bar" style="min-width: 100px; height:2px; margin-top:1rem"></div>
+                    }
+                    else
+                    {
+                        <button type="button" class="btn btn-sm btn-info rounded-pill date-btn" style="width:auto; height:2rem;" data-date="@Groups[i].Key">@Groups[i].Key</button>
+                    }
                     <div id="@Groups[i].Key" style="display:none">
-                        @foreach (var AttributeValue in Groups[i])
+                        @foreach (var AttributeValue in Groups[i].OrderBy(AttributeValue => AttributeValue.ChangeDate))
                         {
                             switch (AttributeValue.Attribute.Type)
                             {
                                 case AttributeType.Integer:
                                     {
-                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">@(((IntegerAttributeValue)AttributeValue).Value)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate text-center w-25">@(((IntegerAttributeValue)AttributeValue).Value)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
                                         break;
                                     }
                                 case AttributeType.Date:
                                     {
-                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">@(((DateAttributeValue)AttributeValue).Value?.ToLocalTime().ToString("dd.MM.yyyy"))</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate text-center w-25">@(((DateAttributeValue)AttributeValue).Value?.ToLocalTime().ToString("dd.MM.yyyy"))</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
                                         break;
                                     }
                                 case AttributeType.Link:
                                     {
-                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">@((AttributeValue.Attribute as LinkAttribute).LinkedEntity.Objects.First(Object => Object.Id == ((LinkAttributeValue)AttributeValue).Value).Name)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate text-center w-25">@((AttributeValue.Attribute as LinkAttribute).LinkedEntity.Objects.FirstOrDefault(Object => Object.Id == ((LinkAttributeValue)AttributeValue).Value)?.Name)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
                                         break;
                                     }
                                 case AttributeType.String:
                                     {
-                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">"@(((StringAttributeValue)AttributeValue).Value)"</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate text-center w-25">"@(((StringAttributeValue)AttributeValue).Value)"</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
                                         break;
                                     }
                                 case AttributeType.Float:
                                     {
-                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">@(((FloatAttributeValue)AttributeValue).Value)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
+                                        <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate text-center w-25">@(((FloatAttributeValue)AttributeValue).Value)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
                                         break;
                                     }
                             }
                         }
                     </div>
                 }
-                <button type="button" class="btn btn-sm btn-info rounded-pill date-btn" style="width:auto; height:2rem;" data-date="@Groups.Last().Key">@Groups.Last().Key</button>
-                <div id="@Groups.Last().Key" style="display:none">
-                    @foreach (var AttributeValue in Groups.Last())
-                    {
-                        switch (AttributeValue.Attribute.Type)
-                        {
-                            case AttributeType.Integer:
-                                {
-                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">@(((IntegerAttributeValue)AttributeValue).Value)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
-                                    break;
-                                }
-                            case AttributeType.Date:
-                                {
-                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">@(((DateAttributeValue)AttributeValue).Value?.ToLocalTime().ToString("dd.MM.yyyy"))</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
-                                    break;
-                                }
-                            case AttributeType.Link:
-                                {
-                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">@((AttributeValue.Attribute as LinkAttribute).LinkedEntity.Objects.FirstOrDefault(Object => Object.Id == ((LinkAttributeValue)AttributeValue).Value)?.Name)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
-                                    break;
-                                }
-                            case AttributeType.String:
-                                {
-                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">"@(((StringAttributeValue)AttributeValue).Value)"</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
-                                    break;
-                                }
-                            case AttributeType.Float:
-                                {
-                                    <div class="d-flex flex-row"><b class="text-truncate col">@AttributeValue.Attribute.Name</b><p>изменено на</p><b class="text-truncate col">@(((FloatAttributeValue)AttributeValue).Value)</b><p>пользователем</p><b class="text-truncate col">@AttributeValue.User.Name</b><p>в</p><b class="text-truncate col">@AttributeValue.ChangeDate.Value.ToLocalTime().ToString("HH:mm")</b></div>
-                                    break;
-                                }
-                        }
-                    }
-                </div>
                 <div class="ms-5 me-5"></div>
             }
         </div>

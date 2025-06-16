@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Attribute = HomeERP.Domain.EAV.Models.Attribute;
 using Object = HomeERP.Domain.EAV.Models.Object;
 
-namespace HomeERP.Services
+namespace HomeERP.Logic
 {
     public class EAVService
     {
@@ -226,8 +226,7 @@ namespace HomeERP.Services
 
         public Attribute GetAttribute(Guid attributeId)
         {
-            Attribute attribute = _attributeRepo.GetBy(attributeId);
-            _entityRepo.Query().Where(entity => entity == attribute.Entity).Load();
+            Attribute attribute = _attributeRepo.Query().Where(attribute => attribute.Id == attributeId).Include(attribute => attribute.Entity).FirstOrDefault();
 
             return attribute;
         }
@@ -239,7 +238,7 @@ namespace HomeERP.Services
 
         public void AddAttribute(Entity Entity, Attribute Attribute)
         {
-            List<Object> Objects = _objectRepo.Query().ToList();
+            List<Object> Objects = _objectRepo.Query().Where(Object => Object.Entity == Entity).ToList();
             User user = GetCurrentUser();
 
             switch (Attribute.Type)
@@ -301,6 +300,11 @@ namespace HomeERP.Services
         public void AddUser(User user)
         {
             _userRepo.Add(user);
+        }
+
+        public void UpdateUser(User user)
+        {
+            _userRepo.Update(user);
         }
 
         public void DeleteUser(Guid userId)

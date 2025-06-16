@@ -1,0 +1,77 @@
+﻿@using HomeERP.Domain.EAV.Models
+@using Object = HomeERP.Domain.EAV.Models.Object
+@model Entity
+
+@using (Html.BeginForm("CreateBundle", "Product", FormMethod.Post, new { id = "formCreateBundle" }))
+{
+    <div class="modal fade" id="CreateBundleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Создание набора товаров</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Укажите название</label>
+                        <input class="form-control" type="text" name="BundleName" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Укажите товары и их количество:</label>
+                        <div class="d-flex flex-column gap-2" id="productContainer">
+                        </div>
+                    </div>
+
+                    <button type="button" class="remove-field btn btn-primary" id="createAddProduct">Добавить товар</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    document.getElementById('createAddProduct').addEventListener('click', function() {
+        const fieldsContainer = document.getElementById('productContainer');
+        const fieldGroup = document.createElement('div');
+        fieldGroup.classList.add('field-group');
+
+        fieldGroup.innerHTML = `
+            <div class="d-flex flex-row justify-content-around">
+                <select class="form-select ms-2 me-2" name="Products[].ProductId" required>
+                @foreach(Object Object in Model.Objects)
+                {
+                    <option value="@Object.Id">@Object.Name</option>
+                }
+                </select>
+                <input class="form-control me-2" name="Products[].ProductAmount" type="number" placeholder="Введите количество..." required>
+                <button type="button" class="remove-field btn btn-danger ms-2">Удалить</button>
+            </div>
+        `;
+
+        fieldsContainer.appendChild(fieldGroup);
+
+        fieldGroup.querySelector('.remove-field').addEventListener('click', function() {
+            fieldsContainer.removeChild(fieldGroup);
+        });
+    });
+
+        document.getElementById('formCreateBundle').addEventListener('submit', function() {
+        const items = document.querySelectorAll('#productContainer .field-group');
+        items.forEach((item, index) => {
+            item.id = 'product_' + index;
+            const select = item.querySelector('select');
+            if (select) {
+                select.setAttribute('name', `Products[${index}].ProductId`);
+            }
+            const input = item.querySelector('input[type=number]');
+            if (input) {
+                input.setAttribute('name', `Products[${index}].ProductAmount`);
+            }
+        });
+    });
+</script>

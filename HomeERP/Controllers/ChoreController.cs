@@ -1,4 +1,4 @@
-﻿using HomeERP.Services;
+﻿using HomeERP.Logic;
 using Microsoft.AspNetCore.Mvc;
 using HomeERP.Views.Chores.DTOs;
 using HomeERP.Domain.Chores.Models;
@@ -73,7 +73,7 @@ namespace HomeERP.Controllers
         {
             Task task = _choreService.GetTask(taskId);
             User? user = _entityService.GetUser(userId);
-            _choreService.AssignUserToTask(task, user);
+            _choreService.AssignUserToTask(user, task);
 
             return RedirectToAction("ChoreExplorer", "Chore", new { ChoreId = task.Chore.Id });
         }

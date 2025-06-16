@@ -3,11 +3,13 @@ using HomeERP.Domain.Common.Contexts;
 using HomeERP.Domain.Common.Models;
 using HomeERP.Domain.Common.Repositories;
 using HomeERP.Domain.EAV.Models;
+using HomeERP.Logic.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Object = HomeERP.Domain.EAV.Models.Object;
 using Task = HomeERP.Domain.Chores.Models.Task;
 
-namespace HomeERP.Services
+namespace HomeERP.Logic
 {
     public class ChoreService
     {
@@ -15,12 +17,14 @@ namespace HomeERP.Services
         private readonly BaseEntityRepository<Entity> _entitiesRepo;
         private readonly BaseEntityRepository<Chore> _choreRepo;
         private readonly BaseEntityRepository<Task> _taskRepo;
-        public ChoreService(BaseEntityRepository<Object> objectRepo, BaseEntityRepository<Entity> entityRepo, BaseEntityRepository<Chore> choreRepo, BaseEntityRepository<Task> taskRepo)
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        public ChoreService(BaseEntityRepository<Object> objectRepo, BaseEntityRepository<Entity> entityRepo, BaseEntityRepository<Chore> choreRepo, BaseEntityRepository<Task> taskRepo, IServiceScopeFactory serviceScopeFactory)
         {
             _objectRepo = objectRepo;
             _entitiesRepo = entityRepo;
             _choreRepo = choreRepo;
             _taskRepo = taskRepo;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         public List<Entity> GetEntities()
@@ -92,13 +96,23 @@ namespace HomeERP.Services
 
         public Task GetTask(Guid taskId)
         {
-            return _taskRepo.Query().Where(task => task.Id == taskId).Include(task => task.Chore).Include(task => task.User).FirstOrDefault();
+            return _taskRepo.Query().Where(task => task.Id == taskId).Include(task => task.Chore).Include(task => task.User).Include(task => task.Object).FirstOrDefault();
         }
 
-        public void AssignUserToTask(Task task, User? user)
+        public void AssignUserToTask(User? toUser, Task task)
         {
-            task.User = user;
+            task.User = toUser;
             _taskRepo.Update(task);
+
+            if (toUser?.ChatId != null)
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var telegramBot = scope.ServiceProvider.GetRequiredService<TelegramBot>();
+
+                    telegramBot.SendMessage((long)toUser.ChatId, $"Вам назначено задание '{task.Chore.Name}' для '{task.Object.Name}'.");
+                }
+            }
         }
     }
 }

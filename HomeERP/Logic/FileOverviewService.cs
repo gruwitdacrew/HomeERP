@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Object = HomeERP.Domain.EAV.Models.Object;
 
-namespace HomeERP.Services
+namespace HomeERP.Logic
 {
     public class FileOverviewService
     {

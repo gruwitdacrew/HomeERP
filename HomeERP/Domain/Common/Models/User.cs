@@ -3,6 +3,7 @@
     public class User : BaseEntity
     {
         public string Name { get; set; }
+        public long? ChatId { get; set; }
 
         public User() { }
 
